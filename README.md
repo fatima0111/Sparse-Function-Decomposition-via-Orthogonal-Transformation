@@ -20,8 +20,6 @@ To run the code, the following packages have to be installed
  
  [LandingSGD](https://github.com/pierreablin/landing) (to run the Landing method)
  
-#### Make sure that the fastsum package is in the same parent directory as the NFFT-Sinkhorn directories.
-
 
 ## Reference
 
