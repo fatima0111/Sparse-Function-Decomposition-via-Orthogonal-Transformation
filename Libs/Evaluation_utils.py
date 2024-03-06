@@ -1,0 +1,123 @@
+import torch
+import math
+import json
+from Anova_AE.Libs.Grid_Search import Method
+if torch.cuda.is_available():
+    torch.set_default_tensor_type('torch.cuda.DoubleTensor')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+def get_total_Rot(data, j, man_opt=False):
+    '''
+
+    :param data:
+    :param j:
+    :param man_opt:
+    :return:
+    '''
+    ground_truth = data[j]['groundtruth']
+    ground_truth['v'] = torch.as_tensor(ground_truth['v'])
+    dim = data[j]['dim']
+
+    BlockSizes = data[j]['SBD_GT']
+    supp = int(data[j]['support'])
+    U1 = torch.as_tensor(data[j]['grad_U'])
+    P = torch.eye(dim)
+
+    P[:supp, :supp] = torch.as_tensor(data[j]['P'])
+    U3_la = torch.eye(dim)
+    U3_re = torch.eye(dim)
+    if man_opt:
+        U3_mo_la = torch.eye(dim)
+        U3_mo_re = torch.eye(dim)
+    b_ad = 0
+    b_ad_inner = 0
+    for b in BlockSizes:
+        if b > 1 and b <= 5:
+            b_ad_inner_ = str(b_ad_inner)
+            if man_opt:
+                U3_mo_la[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(data[j]['R']['gt']['Man_Opt'][b_ad_inner_]['la'])
+
+                U3_mo_re[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(data[j]['R']['gt']['Man_Opt'][b_ad_inner_]['re'])
+            else:
+                U3_la[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(
+                    data[j]['R']['gt']['Man_Opt_GS'][b_ad_inner_]['la'])
+                U3_re[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(
+                    data[j]['R']['gt']['Man_Opt_GS'][b_ad_inner_]['re'])
+            b_ad_inner += 1
+        b_ad += b
+    Rot_la = U3_la @ P @ U1.T
+    Rot_re = U3_re @ P @ U1.T
+    if man_opt:
+        Rot_mo_la = U3_mo_la @ P @ U1.T
+        Rot_mo_re = U3_mo_re @ P @ U1.T
+        return Rot_mo_la, Rot_mo_re
+    return Rot_la, Rot_re
+
+
+def compute_hessian_rotmatrix(data, method, noise_data=False, noisy_rot=False, basis_hess=False, p=1):
+    if noise_data:
+        key_hessian = 'svd_basis_noisis' if basis_hess else 'hessian_noise'
+    else:
+        key_hessian = 'svd_basis' if basis_hess else 'hessian'
+    hessian = torch.as_tensor(data[key_hessian], dtype=torch.float64)
+    method_name = 'Man_Opt' if method == Method.Manifold_Opt else 'Man_Opt_GS' if method == Method.Manifold_Opt_GS else 'Grid_search'
+    gt_no_key = 'noise' if noisy_rot else 'gt'
+    rot_re = torch.as_tensor(data['R'][gt_no_key][method_name]['re'], dtype=torch.float64)
+    rot_la = torch.as_tensor(data['R'][gt_no_key][method_name]['la'], dtype=torch.float64)
+    if p == 1:
+        matrix_re = (rot_re@hessian@rot_re.T).abs().mean(dim=0)
+        matrix_la = (rot_la@hessian@rot_la.T).abs().mean(dim=0)
+        return matrix_re, matrix_la
+    elif p == 2:
+        matrix_re = ((rot_re @ hessian @ rot_re.T).abs()**2).mean(dim=0).sqrt()
+        matrix_la = ((rot_la @ hessian @ rot_la.T).abs()**2).mean(dim=0).sqrt()
+        return matrix_re, matrix_la
+    elif p == math.inf:
+        matrix_re = (rot_re @ hessian @ rot_re.T).abs().max(dim=0)
+        matrix_la = (rot_la @ hessian @ rot_la.T).abs().max(dim=0)
+        return matrix_re, matrix_la
+    else:
+        print('\n p is not defined')
+        exit(1)
+
+
+def get_len_loss(names, out_dir):
+    '''
+
+    :param names:
+    :param out_dir:
+    :return:
+    '''
+    for name in names:
+        with open('{}/{}'.format(out_dir, name), 'r') as convert_file:
+            data = json.load(convert_file)
+            for j in data.keys():
+                dim = data[j]['dim']
+                if data[j]['h_size'] == 1 / 2:
+                    if len(data[j]['loss']['gt']['Man_Opt']['la']) > max_loss_man_opt_2:
+                        max_loss_man_opt_2 = len(data[j]['loss']['gt']['Man_Opt']['la'])
+                    if len(data[j]['loss']['gt']['Man_Opt']['re']) > max_loss_man_opt_2:
+                        max_loss_man_opt_2 = len(data[j]['loss']['gt']['Man_Opt']['re'])
+
+                    if len(data[j]['loss']['noise']['Man_Opt']['la']) > max_loss_man_opt_2_noise:
+                        max_loss_man_opt_2_noise = len(
+                                    data[j]['loss']['noise']['Man_Opt']['la'])
+                    if len(data[j]['loss']['noise']['Man_Opt']['re']) > max_loss_man_opt_2_noise:
+                        max_loss_man_opt_2_noise = len(
+                                    data[j]['loss']['noise']['Man_Opt']['re'])
+                if len(data[j]['loss']['gt']['Man_Opt_GS']['la']) > max_loss_man_opt_2:
+                    max_loss_man_opt_2 = len(data[j]['loss']['gt']['Man_Opt_GS']['la'])
+
+                if len(data[j]['loss']['gt']['Man_Opt_GS']['re']) > max_loss_man_opt_2:
+                    max_loss_man_opt_2 = len(data[j]['loss']['gt']['Man_Opt_GS']['re'])
+
+                if len(data[j]['loss']['noise']['Man_Opt_GS']['la']) > max_loss_man_opt_2_noise:
+                    max_loss_man_opt_2_noise = len(data[j]['loss']['noise']['Man_Opt_GS']['la'])
+
+                if len(data[j]['loss']['gt']['Man_Opt_GS']['re']) > max_loss_man_opt_2_noise:
+                    max_loss_man_opt_2_noise = len(data[j]['loss']['noise']['Man_Opt_GS']['re'])
+
+        print('max_loss_man_opt_2: ', max_loss_man_opt_2)
+        print('max_loss_man_opt_re: ', max_loss_man_opt_2_noise)
+        return max_loss_man_opt_2, max_loss_man_opt_2_noise
