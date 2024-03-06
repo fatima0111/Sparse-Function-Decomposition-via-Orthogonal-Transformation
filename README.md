@@ -1,4 +1,4 @@
-# Sparse-Function-Decomposition-via-Orthogonal-Transformation
+#SFD: Sparse-Function-Decomposition-via-Orthogonal-Transformation
 
 Decomposition of any higher dimensional smooth function into a sum of lower dimensional function, i.e.  
 f(x) = sum.....
