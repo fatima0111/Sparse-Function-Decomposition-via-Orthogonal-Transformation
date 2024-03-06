@@ -1,17 +1,25 @@
 # Sparse-Function-Decomposition-via-Orthogonal-Transformation
 
-Acceleration of the Sinkhorn algorithm for multi-marginal optimal transport with tree and circle structured cost functions. The new algorithm is faster than the usual Sinkhorn algorithm. Numerical examples such as Euler flows and the tree-shaped Barycenter problem illustrate the accuracy of the new algorithm.
-<p align="center">
-<img src="https://github.com/fatima0111/NFFT-Sinkhorn/blob/main/Output_Tree/Barycenter/nfft_sink_barycenter_eta_005_lamda_25_nit_150_Mfftcoef156.png" width="500" height="300">
-</p>
-<p align="center"> 
-    <em>Computing fixed support image barycenter with NFFT-Sinkhorn algorithm where the four corner images are given </em>
-</p>
+Decomposition of any higher dimensional smooth function into a sum of lower dimensional function, i.e.  
+f(x) = sum.....
+Two tipical examples are given by the Anchored and the Anova decomposition. The input space of the underlying target function can be rotation such the resulting function 
+has a sparse decomposition, i.e. most of the summands in .. vanish. In  our work we relate each term f_u to the partial derivative of the function. Later we formule some optimization problems on the partial derivatives in order to get the orthogonal matrix such that the new function has a sparse decomposition. 
+Numerical examples on random sampled matrices and later on functions shows the reliability of the algorithm.
 
 
 ## Prerequisites
-To run the code, the fastsum Matlab interface from the **NFFT** package is required. For more details and the download of the Matlab interface, we refer to https://www-user.tu-chemnitz.de/~potts/nfft/index.php.
+To run the code, the following packages have to be installed
 
+ [Numpy](https://numpy.org/citing-numpy/)
+ 
+ [Pytorch](https://pytorch.org/) (Cuda version)
+ 
+ [Tntorch](https://tntorch.readthedocs.io/en/latest/) (to compute the ANOVA decomposition of the test functions)
+ 
+ [Geoopt](https://geoopt.readthedocs.io/en/latest/manifolds.html) (to run RiemannianSGD for the rectraction method)
+ 
+ [LandingSGD](https://github.com/pierreablin/landing) (to run the Landing method)
+ 
 #### Make sure that the fastsum package is in the same parent directory as the NFFT-Sinkhorn directories.
 
 
@@ -38,7 +46,7 @@ This paper also explains the algorithms in more detail.
 
 ## Legal Information & Credits
 
-Copyright (c) 2024 [Fatima Antarou Ba](https://www.math.tu-berlin.de/fachgebiete_ag_modnumdiff/angewandte_mathematik/v_menue/team/fatima_antarou_ba/v_menue/homepage/), [Oleh Melnyk](https://page.math.tu-berlin.de/~quellm/index.php), [Christian Wald](https://page.math.tu-berlin.de/~quellm/index.php), [Gabriele Steidl](https://page.math.tu-berlin.de/~quellm/index.php)
+Copyright (c) 2024 [Fatima Antarou Ba](https://www.tu.berlin/imageanalysis/ueber-uns/team), [Oleh Melnyk](https://www.tu.berlin/imageanalysis/ueber-uns/team), [Christian Wald](https://www.tu.berlin/imageanalysis/ueber-uns/team), [Gabriele Steidl](https://www.tu.berlin/imageanalysis/ueber-uns/team)
 
 This software was written by Fatima Antarou Ba and Oleh Melnyk and Christian Wald. It was developed at the Institute of Mathematics, TU Berlin. The first mentioned author acknowledges support by the German Research Foundation within the Bundesministerium für Bildung und Forshung within the Sale project.
 
