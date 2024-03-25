@@ -1,31 +1,32 @@
-import sys
-sys.path.append('/homes/math/ba/trafo_nova/')
-sys.path.append('//')
-
-
-import math
-from Libs.roots import stiefel_manifold_opt
-from Libs.Rotations import compute_rot, generate_angles_interval
 import torch
-#from pykeops.torch import LazyTensor
 import numpy as np
 import json
 import itertools
 import time
 from enum import Enum
+import math
+import sys
 
+if '/homes/math/ba/trafo_nova/' not in sys.path:
+    sys.path.append('/homes/math/ba/trafo_nova/')
+if '/homes/numerik/fatimaba/store/Github/trafo_nova/' not in sys.path:
+    sys.path.append('/homes/numerik/fatimaba/store/Github/trafo_nova/')
+if '//' not in sys.path:
+    sys.path.append('//')
 
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda')
+else:
+    device = torch.device('cpu')
 
+from Libs.Optimization import stiefel_manifold_opt
+from Libs.Rotations import compute_rot, generate_angles_interval
 
 class Method(Enum):
     Manifold_Opt = 1
     Grid_Search = 2
     Manifold_Opt_GS = 3
-
-
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.ndarray):
@@ -54,15 +55,12 @@ class Node:
 class Graph:
     def __init__(self, d, batch_h=math.pi/2):
         '''
-
         :param p:
         :param batch_h:
         '''
         self.nodes = {}
         self.batch_h = batch_h
         self.bild_graph(d)
-        #print('\n Bild graph: ', time.time()-t1)
-        #print('self.nodes.keys(): ', len(self.nodes.keys()), self.nodes.keys())
         self.path = []
 
     def bild_graph(self, d, start=0):
@@ -78,15 +76,11 @@ class Graph:
         for i in range(p):
             end_i = angles[i]
             batch_points = np.arange(start, end_i + self.batch_h, self.batch_h).tolist()
-            #print('batch_points: ', len(batch_points), batch_points, p, d, self.batch_h)
-            #print('')
             self.nodes[i] = []
             for ind_j, j in enumerate(batch_points[:-1]):
-                c_j = ind_j + len_batch_old #i*len(batch_points[:-1])+ind_j
-                #print(c_j)
+                c_j = ind_j + len_batch_old
                 end_value = batch_points[ind_j + 1] if batch_points[ind_j + 1] <= end_i else end_i
                 c_node = Node(key=c_j, start_v=j, end_v=end_value)
-                #self.nodes[c_j] = c_node
                 self.nodes[i].append(c_node)
             len_batch_old += len(batch_points[:-1])
 
@@ -169,7 +163,16 @@ class Grid_Search:
                 min_rotations_noisy.append(out2[1])
                 min_losses_noisy.append(out2[2])
         return [min_losses, min_rotations, times], [min_losses_noisy, min_rotations_noisy, times_noisy]
+
+
     def closs(self, R, hessian, hessian_noisy=None):
+        '''
+
+        :param R:
+        :param hessian:
+        :param hessian_noisy:
+        :return:
+        '''
         t1 = time.time()
         mult1 = torch.matmul(
             R.reshape(R.shape[0], 1, R.shape[1], R.shape[1]),
@@ -194,6 +197,8 @@ class Grid_Search:
             return [time1, min_rot, losses[ind]], [time_n, min_rot_noisy, losses_noisy[ind_noisy]]
         else:
             return [time1, min_rot, losses[ind]], []
+
+
     def parametrize_SOn(self, d):
         '''
 
@@ -254,8 +259,6 @@ class Grid_Search:
             return time_rot, times_losses, times_noisy_losses
         else:
             return time_rot, times_losses, []
-    def check_condition(self):
-        return False
 
     def cover_grid(self, datas=None, hessians=None):
         '''
@@ -272,10 +275,8 @@ class Grid_Search:
             if not self.block_form:
                 self.t_noisy_losses += torch.as_tensor(times_noisy_losses)
 
-
-def run_grid_search(datas, h=1/2, batch_h=math.pi / 2, convert_to_list=True):
+def run_grid_search(datas, h=1/2, batch_h=math.pi/2, convert_to_list=True):
     '''
-
     :param datas:
     :param h:
     :param batch_h:
@@ -310,7 +311,9 @@ def run_grid_search(datas, h=1/2, batch_h=math.pi / 2, convert_to_list=True):
         data['h_size'] = h
         data['batch_h'] = batch_h
     return datas
-def run_Man_Opt(data, v, optimizer_method=Method.Grid_Search,h=1/2, batch_h=math.pi / 2,
+
+
+def run_Man_Opt(data, optimizer_method=Method.Grid_Search, h=1/2, batch_h=math.pi / 2,
                 N_epochs=int(1e4), print_mode=False, noisy_data=False, opt_method='both', learning_rate=5e-4):
     '''
     :param hessian:
@@ -354,8 +357,9 @@ def run_Man_Opt(data, v, optimizer_method=Method.Grid_Search,h=1/2, batch_h=math
         elif optimizer_method == Method.Grid_Search:
             return data
 
-def run_MO_Block(hessian, v, optimizer_method=Method.Grid_Search,h=1/2, batch_h=math.pi / 2,
-                N_epochs=int(1e4), print_mode=False):
+
+def run_MO_Block(hessian, optimizer_method=Method.Grid_Search,h=1/2, batch_h=math.pi / 2,
+                N_epochs=int(1e4), print_mode=False, opt_method='both', learning_rate=5e-4):
     '''
     :param hessian:
     :param v:
@@ -366,7 +370,8 @@ def run_MO_Block(hessian, v, optimizer_method=Method.Grid_Search,h=1/2, batch_h=
     :return:
     '''
     if optimizer_method == Method.Manifold_Opt:
-        out = stiefel_manifold_opt(hessian, v, n_epochs_=N_epochs, print_mode=print_mode)
+        out = stiefel_manifold_opt(hessian, n_epochs_=N_epochs, print_mode=print_mode,
+                                   opt_method=opt_method, learning_rate=learning_rate)
         return out
     else:
         grid = Grid_Search(hessians=[hessian], h=h, batch_h=batch_h, block_form=True)
@@ -374,7 +379,8 @@ def run_MO_Block(hessian, v, optimizer_method=Method.Grid_Search,h=1/2, batch_h=
         time_grid_search = [[grid.t_rot, grid.t_losses[0]]]
         min_rot = result_grid_search[0]
         if optimizer_method == Method.Manifold_Opt_GS:
-            out = stiefel_manifold_opt(hessian, v, init_rot=min_rot, n_epochs_=N_epochs, print_mode=print_mode)
+            out = stiefel_manifold_opt(hessian, init_rot=min_rot, n_epochs_=N_epochs, print_mode=print_mode,
+                                       opt_method=opt_method, learning_rate=learning_rate)
             Bs, losses, _ = out
             print('')
             print("\ndiff la: ", torch.norm(Bs[0] - min_rot), torch.norm(min_rot, p='fro'), torch.norm(Bs[0], p='fro'))

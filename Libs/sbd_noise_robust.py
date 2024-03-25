@@ -1,8 +1,9 @@
 import torch
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+    device = torch.device('cuda')
+else:
+    device = torch.device('cpu')
 
 def comp_s(matrix):
     '''

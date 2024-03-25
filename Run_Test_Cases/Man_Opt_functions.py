@@ -18,12 +18,12 @@ else:
     device = torch.device('cpu')
     gdtype = torch.float64
 
-from Libs.Utils import random_function, compute_hessian_orig_2d, \
+from Utils.Function_utils import compute_function, compute_hessian_orig_2d, \
     compute_gradient_orig_2d, noise_function
 
 
 from Libs.Grid_Search import *
-from Libs.roots import get_rank_svd
+from Libs.Optimization import get_rank_svd
 from Libs.sbd_noise_robust import get_U
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
@@ -109,10 +109,10 @@ if __name__ == '__main__':
             means = 0 if cov is not None else None
 
             x_test = data[j]['x_test'] = torch.as_tensor(data[j]['x_test'], dtype=torch.float64)
-            target_test = random_function(x_test, ground_truth=ground_truth)
+            target_test = compute_function(x_test, ground_truth=ground_truth)
             eps1 = 3 if (NN_train or cov is not None) else 3
             eps2 = 2 if (NN_train or cov is not None) else 3
-            y_test = random_function(x_test, ground_truth)
+            y_test = compute_function(x_test, ground_truth)
             gradF_orig =  compute_gradient_orig_2d(
                 x_test, ground_truth)
             gradient = gradF_orig

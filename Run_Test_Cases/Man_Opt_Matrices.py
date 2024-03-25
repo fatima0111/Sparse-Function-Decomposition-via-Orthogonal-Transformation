@@ -1,7 +1,6 @@
 '''
 Running the  procedure for the matrix sets from section 5.1
 with tilte: Manifold optimization on $SO(d)$ for jointly sparsifying a set of symmetric matrices
-@author: Fatima Antarou Ba
 '''
 
 import argparse

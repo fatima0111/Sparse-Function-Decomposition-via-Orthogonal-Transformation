@@ -1,7 +1,6 @@
 '''
 Running the Grid-search initialization procedure for the matrix sets from section 5.1
 with tilte: Manifold optimization on $SO(d)$ for jointly sparsifying a set of symmetric matrices
-@author: by Fatima Antarou Ba
 '''
 
 import argparse
@@ -42,11 +41,11 @@ parser.add_argument('--h_size', default=-1, type=float,
 parser.add_argument('--dim', default=2, type=int,
                     help='Input dimension')
 
+# $ conda activate /work/ba/anova
 args = parser.parse_args()
 h_size = args.h_size
-# $ conda activate /work/ba/anova
 start_N_run = args.start_N_run
-N_run = args.N_run  # 100
+N_run = args.N_run
 dim = args.dim
 in_dir = dirname(dirname(abspath(__file__)))+'/Test_Cases_Man_Opt_GS'
 out_dir = args.output_folder + '/Grid_Search_Output'
