@@ -32,14 +32,17 @@ This paper also explains the algorithms in more detail.
 
 ## Directory structure
 
-| File/Folder   | Purpose                                                                                   |
-| ------------- |-------------------------------------------------------------------------------------------|   
-| Libs          | Sinkhorn Algorithm from Section 4., and NFFT-Sinkhorn algorithm from Section 5. of [[1]](#1) |
-| images        | Marginal images for Wasserstein barycenters with general tree                                 |
-| Output_Circle | Output of the numerical examples for MOT problem with tree-structured cost function       |
-| Output_Tree   | Output of the numerical examples for MOT problem with tree-structured cost function       |
-| Test_functions| Implementation of numerical examples from Section 6. of [[1]](#1)                           |
-| Utils         | Auxiliary methods for the Sinkhorn algorithm and the numerical examples                 | 
+| File/Folder      | Purpose                                                                                   |
+| -------------    |-------------------------------------------------------------------------------------------|   
+| Dataset          | Sinkhorn Algorithm from Section 4., and NFFT-Sinkhorn algorithm from Section 5. of [[1]](#1) |
+| Evaluate_results | Marginal images for Wasserstein barycenters with general tree                                 |
+| Generate_Dataset | Output of the numerical examples for MOT problem with tree-structured cost function       |
+| Generate_Plots   | Output of the numerical examples for MOT problem with tree-structured cost function       |
+| Libs             | Implementation of numerical examples from Section 6. of [[1]](#1)                           |
+| Out_Dataset      | Implementation of numerical examples from Section 6. of [[1]](#1)                           |
+| Plots            | Implementation of numerical examples from Section 6. of [[1]](#1)                           |
+| Run_Test_Cases   | Auxiliary methods for the Sinkhorn algorithm and the numerical examples                 | 
+| Utils            | Auxiliary methods for the Sinkhorn algorithm and the numerical examples                 | 
 
 
 ## Legal Information & Credits
