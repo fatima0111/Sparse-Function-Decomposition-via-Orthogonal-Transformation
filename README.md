@@ -1,8 +1,8 @@
-# Sparse-Function-Decomposition-via-Orthogonal-Transformation
+# SFD: Sparse-Function-Decomposition-via-Orthogonal-Transformation
 
 Decomposition of any higher dimensional smooth function into a sum of lower dimensional function, i.e.  
 f(x) = sum.....
-Two tipical examples are given by the Anchored and the Anova decomposition. The input space of the underlying target function can be rotation such the resulting function 
+Two tipical examples are given by the Anchored and the Anova decomposition. The input space of the underlying target function can be rotated such the resulting function 
 has a sparse decomposition, i.e. most of the summands in .. vanish. In  our work we relate each term f_u to the partial derivative of the function. Later we formule some optimization problems on the partial derivatives in order to get the orthogonal matrix such that the new function has a sparse decomposition. 
 Numerical examples on random sampled matrices and later on functions shows the reliability of the algorithm.
 
@@ -20,8 +20,6 @@ To run the code, the following packages have to be installed
  
  [LandingSGD](https://github.com/pierreablin/landing) (to run the Landing method)
  
-#### Make sure that the fastsum package is in the same parent directory as the NFFT-Sinkhorn directories.
-
 
 ## Reference
 
