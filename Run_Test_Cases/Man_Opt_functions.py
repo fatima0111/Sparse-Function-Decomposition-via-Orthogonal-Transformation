@@ -23,6 +23,7 @@ from Utils.Function_utils import compute_function, compute_hessian_orig_2d, \
 from Libs.Grid_Search import *
 from Utils.Generation_utils import get_rank_svd
 from Libs.sbd_noise_robust import get_U
+from Utils.Evaluation_utils import NumpyEncoder
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

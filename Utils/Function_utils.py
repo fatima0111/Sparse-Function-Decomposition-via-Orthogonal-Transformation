@@ -1,11 +1,10 @@
 import torch
-import numpy as np
-from torch.optim.lr_scheduler import MultiplicativeLR
-from torch.autograd.functional import hessian
 import itertools
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda')
+else:
+    device = torch.device('cpu')
 
 possible_sub_functions = [lambda x, p: x ** p,
                           lambda x, p: torch.sin(x * p),

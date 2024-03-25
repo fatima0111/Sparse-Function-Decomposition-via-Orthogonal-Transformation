@@ -27,17 +27,7 @@ class Method(Enum):
     Manifold_Opt = 1
     Grid_Search = 2
     Manifold_Opt_GS = 3
-class NumpyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, np.integer):
-            return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, torch.Tensor):
-            return obj.cpu().numpy().tolist()
-        return json.JSONEncoder.default(self, obj)
+
 
 class Node:
     def __init__(self, key=None, start_v=None, end_v=None):

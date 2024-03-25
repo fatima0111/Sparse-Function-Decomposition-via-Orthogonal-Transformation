@@ -1,82 +1,19 @@
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
-
+import copy
 from Utils.Function_utils import compute_hessian_orig_2d, compute_gradient_orig_2d,\
     noise_function
 from Libs.Grid_Search import *
 from Utils.Evaluation_utils import batches
 from Libs.sbd_noise_robust import get_U
 from Utils.Generation_utils import get_rank_svd
-import copy
-
-
-def func1():
-    '''
-    f(x_1, ..., x_7) = sin(2x_1)*x_7^3 + exp(
-        -(x_1-1)^2)*(x_4+3) + cos(2*x_2)*sin(3*x_5) + x_6^2
-    :return: f(x_1, ..., x_7)
-    '''
-
-    dim = 7
-    blocks = [[0, 3, 6], [1, 4]]
-    cops = [[0, 6], [0, 3], [1, 4]]
-    max_components = 3
-    t_sub_function_indices = [[1, 0], [4, 5], [2, 5]]
-    t_num_sub_function_entries = [2, 2, 2]
-    parameters = [[2, 3], [1, 1], [2, 3]]
-    coeff = [7, 5, 10]
-    torch.manual_seed(10)
-    np.random.seed(10)
-    v = torch.as_tensor(np.linalg.svd(np.random.rand(dim, dim))[0], dtype=torch.float64)
-    ground_truth = {}
-    ground_truth['n'] = dim
-    ground_truth['max_components'] = max_components
-    ground_truth['K'] = len(t_num_sub_function_entries)
-    ground_truth['Blocs'] = blocks
-    ground_truth['U'] = cops
-    ground_truth['num_samples'] = int(1e2)
-    ground_truth['t_sub_function_indices'] = [u for u in t_sub_function_indices]
-    ground_truth['t_num_sub_function_entries'] = t_num_sub_function_entries
-    ground_truth['parameters'] = parameters
-    ground_truth['coeff'] = coeff
-    ground_truth['v'] = v
-    return ground_truth
-
-def func2():
-    '''
-        f(x_1, ..., x_7) = sin(2x_1)*x_7^3 + exp(
-            -(x_1-1)^2)*(x_4+3) + cos(2*x_2)*sin(3*x_5) + x_6^2
-        :return: f(x_1, ..., x_7)
-    '''
-
-    dim = 7
-    blocks = [[0, 1, 3, 6], [2, 4, 5]]
-    cops = [[0, 6], [0, 3], [1, 6], [2, 4], [4, 5]]
-    max_components = 4
-    t_sub_function_indices = [[0, 0], [4, 2], [1, 2], [2, 1], [0, 0]]
-    t_num_sub_function_entries = [2, 2, 2, 2, 2]
-    parameters = [[1, 3], [1, 3], [1, 1], [2, 3], [1, 1]]
-    coeff = [10, 5, 8, 12, 6]
-    torch.manual_seed(10)
-    np.random.seed(10)
-    v = torch.as_tensor(np.linalg.svd(np.random.rand(dim, dim))[0], dtype=torch.float64)
-    ground_truth = {}
-    ground_truth['n'] = dim
-    ground_truth['max_components'] = max_components
-    ground_truth['K'] = len(t_num_sub_function_entries)
-    ground_truth['Blocs'] = blocks
-    ground_truth['U'] = cops
-    ground_truth['num_samples'] = int(1e2)
-    ground_truth['t_sub_function_indices'] = [u for u in t_sub_function_indices]
-    ground_truth['t_num_sub_function_entries'] = t_num_sub_function_entries
-    ground_truth['parameters'] = parameters
-    ground_truth['coeff'] = coeff
-    ground_truth['v'] = v
-    return ground_truth
+from Utils.Evaluation_utils import Init_Method
+from Generate_Datasets.ANOVA_decomp_functions import *
+from Utils.Evaluation_utils import NumpyEncoder
 
 def set_gt(ground_truths):
     '''
-    Generate data set from ground_truths information
+    Generate dataset from ground_truths information
     :param ground_truths: dictionary containing the information of the test function
     :return: extended dictionary containing ground_truth
     '''
@@ -127,29 +64,8 @@ def set_gt(ground_truths):
         datas[str(ind_g)] = Output
     return datas
 
-def train_model(datas, output_folder, N_epochs = int(5e4), run_man_opt=True, h_size=None):
-    '''
-    :param datas:
-    :param output_folder:
-    :param N_epochs:
-    :param run_man_opt:
-    :param h_size:
-    :return:
-    '''
-    if run_man_opt:
-        Compute_rotatation(datas, output_folder, N_epochs=N_epochs, run_man_opt=True, cov=None)
-        Compute_rotatation(datas, output_folder, N_epochs=N_epochs,
-                           run_man_opt=True, cov=0.5)
-    else:
-        h_sizes = [h_size] if h_size is not None else [1, 0.5, 0.25, 0.125]
-        for h_size in h_sizes:
-            Compute_rotatation(datas, output_folder, N_epochs=N_epochs, run_man_opt=run_man_opt,
-                               cov=None, h_size=h_size)
-
-            Compute_rotatation(datas, output_folder, N_epochs=N_epochs,
-                               run_man_opt=run_man_opt, cov=0.5, h_size=h_size)
 def Compute_rotatation(datas, output_folder, h_size=None,
-               N_epochs = int(5e4), run_man_opt=True, cov=None):
+               N_epochs = int(5e4), init_method=Init_Method.RI, cov=None):
     '''
     :param datas:
     :param output_folder:
@@ -174,7 +90,7 @@ def Compute_rotatation(datas, output_folder, h_size=None,
         if cov is not None:
             gradient_noise = noise_function(x_test.clone(), cov=cov, type='0', dtype=dtype)
             hessian_noise = noise_function(x_test.clone(), cov=cov, type='1', dtype=dtype)
-            gradient =+ gradient_noise
+            gradient += gradient_noise
             hessianF_orig += hessian_noise
         u1, d1, v1 = torch.svd(gradient)
         data['grad_U'] = u1
@@ -217,7 +133,7 @@ def Compute_rotatation(datas, output_folder, h_size=None,
                 hessian_rank_b = hessian_rank_blocks[:, b_ad:b_ad + b, b_ad:b_ad + b]
                 hessian_b = hessian_blocks[:, b_ad:b_ad + b, b_ad:b_ad + b]
 
-                if run_man_opt:
+                if init_method == Init_Method.RI:
                     result_man_opt = run_MO_Block(
                         hessian_rank_b, optimizer_method=Method.Manifold_Opt, N_epochs=N_epochs)
                     Bs_man_opt, losses_man_opt, times_man_opt = result_man_opt
@@ -258,24 +174,21 @@ def Compute_rotatation(datas, output_folder, h_size=None,
                 b_ad_inner += 1
             b_ad += b
             suff_ = '_cov_{}'.format(cov) if cov is not None else ''
-            if not run_man_opt:
-                with open('{}/Test_anova{}_h_size_{}.json'.format(output_folder, suff_, h_size), 'w') as convert_file:
+            if init_method == Init_Method.GS:
+                with open('{}/Test_ANOVA{}_h_size_{}.json'.format(output_folder, suff_, h_size), 'w') as convert_file:
                     json.dump(datas, convert_file, cls=NumpyEncoder)
             else:
-                with open('{}/Test_anova{}_mo.json'.format(output_folder, suff_), 'w') as convert_file:
+                with open('{}/Test_ANOVA{}_mo.json'.format(output_folder, suff_), 'w') as convert_file:
                     json.dump(datas, convert_file, cls=NumpyEncoder)
     return datas
 
-
-
 if __name__ == '__main__':
-
     output_folder = '/homes/numerik/fatimaba/store/Github/trafo_nova/Anova_AE/Output_files'
-    cov = None
-    run_mo_gs = True
-    tr_model = False
-    evaluate = False
-    if tr_model:
+    init_method = Init_Method.GS
+    covs = [None, 0.5]
+    h_size = 1.0
+    for cov in covs:
         datas = set_gt([func1(), func2()])
-        train_model(datas, output_folder, h_size=1, N_epochs=int(5e4), run_man_opt=run_mo_gs)
-        train_model(datas, output_folder, N_epochs=int(5e4), run_man_opt=not run_mo_gs)
+        Compute_rotatation(datas, output_folder, N_epochs=int(5e4), init_method=init_method, cov=cov)
+        Compute_rotatation(datas, output_folder, N_epochs=int(5e4), init_method=init_method,
+                           cov=cov, h_size=h_size)

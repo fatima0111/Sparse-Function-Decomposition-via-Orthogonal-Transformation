@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import math
 import json
 from enum import Enum
@@ -6,7 +7,9 @@ from Libs.Grid_Search import Method
 
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda')
+else:
+    device = torch.device('cpu')
 
 batches = {
     2: {3: math.pi,
@@ -29,6 +32,18 @@ batches = {
 class Init_Method(Enum):
     RI = 1
     GS = 2
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, torch.Tensor):
+            return obj.cpu().numpy().tolist()
+        return json.JSONEncoder.default(self, obj)
 
 def get_total_Rot(data, j, init_method=Init_Method.RI):
     '''
