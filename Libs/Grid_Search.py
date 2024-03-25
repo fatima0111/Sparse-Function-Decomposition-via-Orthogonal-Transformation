@@ -4,8 +4,8 @@ sys.path.append('//')
 
 
 import math
-from Anova_AE.Libs.roots import stiefel_manifold_opt
-from Anova_AE.Libs.Rotations import compute_rot, generate_angles_interval
+from Libs.roots import stiefel_manifold_opt
+from Libs.Rotations import compute_rot, generate_angles_interval
 import torch
 #from pykeops.torch import LazyTensor
 import numpy as np
@@ -311,7 +311,7 @@ def run_grid_search(datas, h=1/2, batch_h=math.pi / 2, convert_to_list=True):
         data['batch_h'] = batch_h
     return datas
 def run_Man_Opt(data, v, optimizer_method=Method.Grid_Search,h=1/2, batch_h=math.pi / 2,
-                N_epochs=int(1e4), print_mode=False, noisy_data=False):
+                N_epochs=int(1e4), print_mode=False, noisy_data=False, opt_method='both', learning_rate=5e-4):
     '''
     :param hessian:
     :param v:
@@ -326,7 +326,8 @@ def run_Man_Opt(data, v, optimizer_method=Method.Grid_Search,h=1/2, batch_h=math
                               ) if not noisy_data else torch.as_tensor(
         data['svd_basis_noisis'], dtype=torch.float64)
     if optimizer_method == Method.Manifold_Opt:
-        out = stiefel_manifold_opt(hessian, v, n_epochs_=N_epochs, print_mode=print_mode)
+        out = stiefel_manifold_opt(hessian, n_epochs_=N_epochs, print_mode=print_mode,
+                                   opt_method=opt_method, learning_rate=learning_rate)
         return out
     else:
         if data['R']['gt']['Grid_search'] == {}:
@@ -340,7 +341,9 @@ def run_Man_Opt(data, v, optimizer_method=Method.Grid_Search,h=1/2, batch_h=math
                                 data['R']['noise']['Grid_search'],
                                   dtype=torch.float64)
         if optimizer_method == Method.Manifold_Opt_GS:
-            out = stiefel_manifold_opt(hessian, v, init_rot=min_rot, n_epochs_=N_epochs, print_mode=print_mode)
+            out = stiefel_manifold_opt(hessian, init_rot=min_rot, n_epochs_=N_epochs,
+                                       print_mode=print_mode, opt_method=opt_method,
+                                       learning_rate=learning_rate)
             Bs, losses, _ = out
             print('')
             print("\ndiff la: ", torch.norm(Bs[0] - min_rot), torch.norm(min_rot, p='fro'), torch.norm(Bs[0], p='fro'))

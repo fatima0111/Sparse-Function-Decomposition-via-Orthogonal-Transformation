@@ -1,15 +1,31 @@
+'''
+Running the  procedure for the matrix sets from section 5.1
+with tilte: Manifold optimization on $SO(d)$ for jointly sparsifying a set of symmetric matrices
+@author: Fatima Antarou Ba
+'''
+
 import argparse
 import copy
 from os.path import dirname, abspath
+import sys
 import torch
+
+if '/homes/math/ba/trafo_nova/' not in sys.path:
+    sys.path.append('/homes/math/ba/trafo_nova/')
+if '/homes/numerik/fatimaba/store/Github/trafo_nova/' not in sys.path:
+    sys.path.append('/homes/numerik/fatimaba/store/Github/trafo_nova/')
+if '//' not in sys.path:
+    sys.path.append('//')
+
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda')
+    gdtype = torch.float64
+else:
+    device = torch.device('cpu')
+    gdtype = torch.float64
 
-import sys
-sys.path.append('/homes/math/ba/trafo_nova/')
-sys.path.append('//')
-from Anova_AE.Libs.Grid_Search import *
+from Libs.Grid_Search import *
 
 parser = argparse.ArgumentParser()
 
@@ -31,18 +47,22 @@ parser.add_argument('-run_man_opt', action='store_true',
                     help='Var to Run manifold optimization with random init')
 parser.add_argument('--print_mode', action='store_true',
                     help='print losses of the manifold optimization')
-
-args = parser.parse_args()
-#run_man_opt_gs = args.run_man_opt_gs
-h_size = args.h_size
+parser.add_argument('--opt_method', default='both', type=str,
+                        help='Manifold optimization method: 1.RiemannianSGD, 2.LandingSGD, default:both methods')
+parser.add_argument('--learning_rate', default=5e-4, type=int,
+                        help='learning rate for the manifold optimization method')
 
 # $ conda activate /work/ba/anova
+args = parser.parse_args()
+h_size = args.h_size
 start_N_run = args.start_N_run
-N_run = args.N_run  # 100
+N_run = args.N_run
 N_epochs = args.N_epochs
 dim = args.dim
 run_man_opt = args.run_man_opt
 print_mode = args.print_mode
+opt_method = args.opt_method
+learning_rate = args.learning_rate
 in_dir_mo = dirname(dirname(abspath(__file__)))+'/Test_Cases_Man_Opt_GS'
 in_dir = args.output_folder + '/Grid_Search_Output'
 batches = {
@@ -95,7 +115,8 @@ for j in range(start_N_run, N_run):
 
         result_man_opt_noise = run_Man_Opt(
             data, v, optimizer_method=Method.Manifold_Opt,
-            h=h_size, batch_h=batch_h, N_epochs=N_epochs, print_mode=print_mode, noisy_data=True)
+            h=h_size, batch_h=batch_h, N_epochs=N_epochs, print_mode=print_mode,
+            noisy_data=True, opt_method=opt_method, learning_rate=learning_rate)
         Bs_man_opt_noise, losses_man_opt_noise, times_man_opt_noise = result_man_opt_noise
 
         data['M']['gt']['Man_Opt']['la'] = (Bs_man_opt[0] @ hessian @ Bs_man_opt[0].T).abs().mean(dim=0)
@@ -120,13 +141,14 @@ for j in range(start_N_run, N_run):
         print('\n MAN_OPT_GS REIN')
         result_man_opt_gs, result_grid_search = run_Man_Opt(
             data, v, optimizer_method=Method.Manifold_Opt_GS,
-            h=h_size, batch_h=batch_h, N_epochs=N_epochs, print_mode=print_mode)
+            h=h_size, batch_h=batch_h, N_epochs=N_epochs, print_mode=print_mode,
+            opt_method=opt_method, learning_rate=learning_rate)
         Bs_man_opt_gs, losses_man_opt_gs, times_man_opt_gs = result_man_opt_gs
         result_man_opt_gs_noise, result_grid_search_noise = run_Man_Opt(
             data, v, optimizer_method=Method.Manifold_Opt_GS,
             h=h_size, batch_h=batch_h, N_epochs=N_epochs, print_mode=print_mode, noisy_data=True)
         Bs_man_opt_gs_noise, losses_man_opt_gs_noise, times_man_opt_gs_noise = result_man_opt_gs_noise
-        #print('\n Overall time: ', t2-t1, time.time()-t2)
+
 
         #data['M']['gt']['Grid_search'] = (result_grid_search[0]@hessian@result_grid_search[0].T).abs().mean(dim=0)
         data['M']['gt']['Man_Opt_GS']['la'] = (Bs_man_opt_gs[0]@hessian@Bs_man_opt_gs[0].T).abs().mean(dim=0)
@@ -152,9 +174,6 @@ for j in range(start_N_run, N_run):
         #data['loss']['noise']['Grid_search'] = result_grid_search_noise[1]
         data['loss']['noise']['Man_Opt_GS']['la'] = losses_man_opt_gs_noise[0]
         data['loss']['noise']['Man_Opt_GS']['re'] = losses_man_opt_gs_noise[1]
-
-
-    #print(datas[j])
     if run_man_opt:
         with open('{}/Out_comp/Compare_Man_opt_grid_search_{}_dim_{}.json'.format(
                 args.output_folder, args.suffix_file, dim), 'w') as convert_file:

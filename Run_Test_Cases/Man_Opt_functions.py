@@ -1,20 +1,30 @@
 import argparse
 import copy
 from os.path import dirname, abspath
-import os
 import sys
-
 import torch
+if '/homes/math/ba/trafo_nova/' not in sys.path:
+    sys.path.append('/homes/math/ba/trafo_nova/')
+if '/homes/numerik/fatimaba/store/Github/trafo_nova/' not in sys.path:
+    sys.path.append('/homes/numerik/fatimaba/store/Github/trafo_nova/')
+if '//' not in sys.path:
+    sys.path.append('//')
 
-sys.path.append('/homes/math/ba/trafo_nova/')
-sys.path.append('//')
-from Anova_AE.Libs.Utils import compute_gradient_autograd, \
-    train_model, random_function, compute_hessian, compute_hessian_orig_2d, \
+if torch.cuda.is_available():
+    torch.set_default_tensor_type('torch.cuda.DoubleTensor')
+    device = torch.device('cuda')
+    gdtype = torch.float64
+else:
+    device = torch.device('cpu')
+    gdtype = torch.float64
+
+from Libs.Utils import random_function, compute_hessian_orig_2d, \
     compute_gradient_orig_2d, noise_function
 
-from Anova_NN.Model_class import SparseAdditiveModel
-from Anova_AE.Libs.Grid_Search import *
-from Anova_AE.Libs.roots import get_rank_svd, get_U
+
+from Libs.Grid_Search import *
+from Libs.roots import get_rank_svd
+from Libs.sbd_noise_robust import get_U
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -30,18 +40,19 @@ if __name__ == '__main__':
     parser.add_argument('--N_run', default=50, type=int,
                         help='Number of runs')
     parser.add_argument('--N_epochs', default=int(5e4) + 1, type=int,
-                        help='Number of epochs')#
+                        help='Number of epochs')
     parser.add_argument('--h_size', default=1, type=float,
                         help='Inner step_size Grid_seach')
     parser.add_argument('--run_man_opt', default=False, type=bool,
                         help='Var to run random initialization manifold optimization')
-    parser.add_argument('--NN_train', default=False, type=bool,
-                        help='Wether using a NN to compute the gradient and hessian'
-                             'or directly use the groundtruth')
     parser.add_argument('--cov', default=None, type=float,
                         help='standard deviation of the noise function')
     parser.add_argument('--test_cases', default='Test_functions_N_50_coeff.json', type=str,
                         help='filename where the test_cases are saved')
+    parser.add_argument('--opt_method', default='both', type=str,
+                        help='Manifold optimization method: 1.RiemannianSGD, 2.LandingSGD, default:both methods')
+    parser.add_argument('--learning_rate', default=5e-4, type=int,
+                        help='learning rate for the manifold optimization method')
     args = parser.parse_args()
 
     h_size = args.h_size
@@ -58,6 +69,8 @@ if __name__ == '__main__':
     in_dir = dirname(dirname(abspath(__file__))) + '/Test_Cases_Man_Opt_GS'
     cov = args.cov
     test_cases = args.test_cases
+    opt_method = args.opt_method
+    learning_rate = args.learning_rate
     # os.path.dirname(os.getcwd())+'/Anova_AE/Test_Cases_Man_Opt_GS'
 
     batches = {
@@ -97,50 +110,13 @@ if __name__ == '__main__':
 
             x_test = data[j]['x_test'] = torch.as_tensor(data[j]['x_test'], dtype=torch.float64)
             target_test = random_function(x_test, ground_truth=ground_truth)
-
-            if NN_train:
-                NN_K = 1
-                N_train = int(25e3) * dim
-                x = (2 * torch.rand(N_train, dim) - 1)
-                target = random_function(x, ground_truth)
-                sigma = 1
-                if not existing_model:
-                    model_params, my_print = train_model(x, target, NN_K,
-                                                         batch_size=N_train // 2,
-                                                         sigma=sigma)
-                    torch.save(model_params,
-                               root_NN + 'model_{}_lambd_{}_pen_{}_N{}_{}d.pt'.format(j, lambd, pen, N_train,
-                                                                                      data[j]['groundtruth']['max_components']))
-                    root_NN_training = root + '/Output_NN_training'
-                    if not os.path.isdir(root_files):
-                        os.mkdir(root_files)
-                    myfile = open('{}/f_n_model_{}_lambd_{}_pen_{}_NN.txt'.format(root_NN_training, j, lambd, pen), "w")
-                    myfile.write(my_print)
-                    myfile.close()
-                else:
-                    path = root_NN + 'model_{}_lambd_{}_pen_{}_N{}_{}d.pt'.format(j, lambd, pen, N_train,
-                                                                                  data[j]['groundtruth'][
-                                                                                      'max_components'])
-                    model_params = torch.load(path, map_location=device)
-                    model = SparseAdditiveModel(dim, NN_K, setting=1)
-                    model.load_state_dict(model_params)
-                    model.eval()
-
-                    model.set_sigma(sigma)
-                    nn_loss = (((model(x_test.clone()).squeeze() - target_test.squeeze().to(
-                        device)) ** 2) / model.sigma ** 2).mean()
-                    print("\n NN_loss {}".format(nn_loss), model.sigma, model.sub_networks[0].sigma)
-                    model.to(device)
             eps1 = 3 if (NN_train or cov is not None) else 3
             eps2 = 2 if (NN_train or cov is not None) else 3
             y_test = random_function(x_test, ground_truth)
-            gradF_orig = compute_gradient_autograd(x_test.clone(), model=model
-                                                   ) if NN_train else compute_gradient_orig_2d(
+            gradF_orig =  compute_gradient_orig_2d(
                 x_test, ground_truth)
             gradient = gradF_orig
-            hessianF_orig = compute_hessian(x_test.clone(), model=model, dtype=dtype
-                                            ) if NN_train else compute_hessian_orig_2d(
-                x_test.clone(), ground_truth)
+            hessianF_orig =  compute_hessian_orig_2d(x_test.clone(), ground_truth)
             if cov is not None:
                 gradient_noise = noise_function(x_test.clone(), cov=cov, type='0', dtype=dtype)
                 hessian_noise = noise_function(x_test.clone(), cov=cov, type='1', dtype=dtype)
@@ -200,7 +176,8 @@ if __name__ == '__main__':
                     if h_size == 1 / 2 or run_man_opt:
                         result_man_opt = run_Man_Opt(
                             hessian_rank_b, v[b, b], optimizer_method=Method.Manifold_Opt,
-                            h=h_size, batch_h=batch_h, N_epochs=N_epochs, dtype=dtype)
+                            h=h_size, batch_h=batch_h, N_epochs=N_epochs,
+                            opt_method=opt_method, learning_rate=learning_rate)
                         Bs_man_opt, losses_man_opt, times_man_opt = result_man_opt
 
                         data[j]['M']['gt']['Man_Opt'][b_ad_inner]['la'] = (
@@ -214,12 +191,11 @@ if __name__ == '__main__':
                         data[j]['loss']['gt']['Man_Opt'][b_ad_inner]['la'] = losses_man_opt[0]
                         data[j]['loss']['gt']['Man_Opt'][b_ad_inner]['re'] = losses_man_opt[1]
 
-                        data[j]['time']['gt']['Man_Opt'][b_ad_inner]['la'] = times_man_opt[0]
-                        data[j]['time']['gt']['Man_Opt'][b_ad_inner]['re'] = times_man_opt[1]
+                        #data[j]['time']['gt']['Man_Opt'][b_ad_inner]['la'] = times_man_opt[0]
+                        #data[j]['time']['gt']['Man_Opt'][b_ad_inner]['re'] = times_man_opt[1]
 
-                    result_man_opt_gs, result_grid_search = run_Man_Opt(
-                        hessian_rank_b, v[b, b], optimizer_method=Method.Manifold_Opt_GS,
-                        h=h_size, batch_h=batch_h, N_epochs=N_epochs, dtype=dtype)
+                    result_man_opt_gs, result_grid_search = run_Man_Opt(hessian_rank_b, v[b, b], optimizer_method=Method.Manifold_Opt_GS,
+                        h=h_size, batch_h=batch_h, N_epochs=N_epochs, opt_method=opt_method, learning_rate=learning_rate)
                     Bs_man_opt_gs, losses_man_opt_gs, times_man_opt_gs = result_man_opt_gs
 
                     data[j]['M']['gt']['Grid_search'][b_ad_inner] = (
@@ -240,11 +216,11 @@ if __name__ == '__main__':
                     data[j]['loss']['gt']['Man_Opt_GS'][b_ad_inner]['la'] = losses_man_opt_gs[0]
                     data[j]['loss']['gt']['Man_Opt_GS'][b_ad_inner]['re'] = losses_man_opt_gs[1]
 
-                    data[j]['time']['gt']['Grid_search'][b_ad_inner] = result_grid_search[2]
-                    data[j]['time']['gt']['Man_Opt_GS'][b_ad_inner]['la'] = times_man_opt_gs[0] + \
-                                                                            result_grid_search[2]
-                    data[j]['time']['gt']['Man_Opt_GS'][b_ad_inner]['re'] = times_man_opt_gs[1] + \
-                                                                            result_grid_search[2]
+                    #data[j]['time']['gt']['Grid_search'][b_ad_inner] = result_grid_search[2]
+                    #data[j]['time']['gt']['Man_Opt_GS'][b_ad_inner]['la'] = times_man_opt_gs[0] + \
+                    #                                                        result_grid_search[2]
+                    #data[j]['time']['gt']['Man_Opt_GS'][b_ad_inner]['re'] = times_man_opt_gs[1] + \
+                    #                                                        result_grid_search[2]
 
                     b_ad_inner += 1
                 b_ad += b

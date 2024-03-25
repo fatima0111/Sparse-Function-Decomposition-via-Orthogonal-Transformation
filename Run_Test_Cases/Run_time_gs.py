@@ -8,7 +8,7 @@ if '/homes/math/ba/trafo_nova/' not in sys.path:
     sys.path.append('/homes/math/ba/trafo_nova/')
 if '//' not in sys.path:
     sys.path.append('//')
-from Anova_AE.Libs.Grid_Search import *
+from Libs.Grid_Search import *
 import math
 import json
 import copy

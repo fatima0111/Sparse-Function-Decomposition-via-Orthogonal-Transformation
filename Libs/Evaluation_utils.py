@@ -1,7 +1,7 @@
 import torch
 import math
 import json
-from Anova_AE.Libs.Grid_Search import Method
+from Libs.Grid_Search import Method
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

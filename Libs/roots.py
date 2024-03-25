@@ -6,21 +6,21 @@ from geoopt.optim import RiemannianSGD
 from landing import LandingSGD
 import numpy as np
 from torch.optim.lr_scheduler import MultiplicativeLR
-import scipy.optimize as so
 import torch
 import time
 import math
-from Anova_AE.Libs.sbd_noise_robust import get_U
-from Anova_AE.Libs.Rotations import compute_rot
+from Libs.Rotations import compute_rot
 
 
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-def stiefel_manifold_opt(hessian, rand_rot, init_rot=None, n_epochs_=int(2e4),
-                         n_inits=5, n_init_epochs=int(5e3), print_mode=False):
+def stiefel_manifold_opt(hessian, init_rot=None, n_epochs_=int(2e4),
+                         n_inits=5, n_init_epochs=int(5e3), print_mode=False,
+                         opt_method='both', learning_rate=5e-4):
     '''
-
+    Running RiemannianSGD or LandingSDG with init rotation matrix init_rot obtained from the Grid-search
+    method 
     :param hessian: H of dimension Nxnxn where N is the number of sample points
     :param rand_rot: ground-truth orthogonal matrix A
     :param n_epochs_:
@@ -29,14 +29,15 @@ def stiefel_manifold_opt(hessian, rand_rot, init_rot=None, n_epochs_=int(2e4),
     '''
     hessian = hessian.to(device)
     lmbda = lambda epoch: .95
-    # init_weights = torch.eye(p,p)
     D = hessian.shape[1]
-
-    loss_star = torch.tensor([0])  # torch.norm(A,'nuc')
-
-    method_names = ["Landing", "RetractionSGD"]
-    methods = [LandingSGD, RiemannianSGD]
-    learning_rates = [0.0005, 0.0005]
+    if opt_method == 'both':
+        method_names = ["LandingSGD", "RiemannianSGD"]
+        methods = [LandingSGD, RiemannianSGD]
+        learning_rates = [learning_rate, learning_rate]
+    else:
+        method_names = [opt_method]
+        methods = methods_dic[method]
+        learning_rates = [learning_rate]
     methods_n_epochs = [n_epochs_, n_epochs_]
     sol = torch.randn(len(methods), D, D)
     index = 0
@@ -46,7 +47,6 @@ def stiefel_manifold_opt(hessian, rand_rot, init_rot=None, n_epochs_=int(2e4),
     losses_array = [[], []]
     times_ = []
     for method_name, method, learning_rate, n_epochs in zip(method_names, methods, learning_rates, methods_n_epochs):
-        #if method_name == "RetractionSGD":
         t1 = time.time()
         iterates = []
         if init_rot is not None:
@@ -80,25 +80,19 @@ def stiefel_manifold_opt(hessian, rand_rot, init_rot=None, n_epochs_=int(2e4),
                 test_min = loss.clone().item()
                 param_min = param.clone().detach()
             loss.backward()
-
             with torch.no_grad():
                 xi = param.grad-.5*param@(param.T@param.grad + param.grad.T@param)
-                #print(xi)
                 xi_norm = torch.norm(xi, p='fro')
                 if epoch % 500 == 0 and print_mode:
                     print("max(1, torch.norm(param.grad, p='fro')): ", torch.norm(xi, p='fro'))
             optimizer.step()
             if epoch % 700 == 0 and scheduler.get_last_lr()[0] > 1e-6:
-                # print(epoch, time() - t0, ' ', loss.item())
                 if print_mode:
                     print('loss1-loss: ', abs(loss1 - loss))
                     print(epoch, loss.item())
-                #time_list.append(time() - t0)
                 scheduler.step()
                 if print_mode:
                     print('******************* Learning_rate: {}'.format(scheduler.get_last_lr()[0]))
-
-
             if epoch <= int(1e3) and epoch % 50 == 0:
                 losses_array[index].append(test_min)
 

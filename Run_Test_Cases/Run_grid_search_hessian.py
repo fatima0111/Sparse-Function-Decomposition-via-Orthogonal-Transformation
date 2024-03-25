@@ -1,18 +1,30 @@
+'''
+Running the Grid-search initialization procedure for the matrix sets from section 5.1
+with tilte: Manifold optimization on $SO(d)$ for jointly sparsifying a set of symmetric matrices
+@author: by Fatima Antarou Ba
+'''
+
 import argparse
 import copy
 from os.path import dirname, abspath
-import torch
-if torch.cuda.is_available():
-    torch.set_default_tensor_type('torch.cuda.DoubleTensor')
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 import sys
+import torch
 if '/homes/math/ba/trafo_nova/' not in sys.path:
     sys.path.append('/homes/math/ba/trafo_nova/')
+if '/homes/numerik/fatimaba/store/Github/trafo_nova/' not in sys.path:
+    sys.path.append('/homes/numerik/fatimaba/store/Github/trafo_nova/')
 if '//' not in sys.path:
     sys.path.append('//')
 
-from Anova_AE.Libs.Grid_Search import *
+if torch.cuda.is_available():
+    torch.set_default_tensor_type('torch.cuda.DoubleTensor')
+    device = torch.device('cuda')
+    gdtype = torch.float64
+else:
+    device = torch.device('cpu')
+    gdtype = torch.float64
+
+from Libs.Grid_Search import *
 
 parser = argparse.ArgumentParser()
 
@@ -29,7 +41,6 @@ parser.add_argument('--h_size', default=-1, type=float,
                     help='Inner step_size Grid_seach')
 parser.add_argument('--dim', default=2, type=int,
                     help='Input dimension')
-
 
 args = parser.parse_args()
 h_size = args.h_size
@@ -59,8 +70,6 @@ batches = {
         1/2: 1.5,
         1/4: 0.75}
 }
-
-
 if h_size in batches[dim].keys():
     batch_h = batches[dim][h_size]
     filename = '{}/Hessians_dim_{}_N_100.json'.format(in_dir, dim)
@@ -70,13 +79,11 @@ if h_size in batches[dim].keys():
         new_datas = {}
         for j in range(start_N_run, N_run):
             new_datas[str(j)] = datas[str(j)]
-        #datas_list = [datas[j] for j in datas.keys()]
         run_grid_search(new_datas, h_size, batch_h)
         with open('{}/Hessian_GS_{}_h_{}_bh_{:.2f}_dim_{}_gs.json'.format(out_dir, args.suffix_file, args.h_size,
                                                                                           batch_h, dim), 'w') as convert_file:
             json.dump(new_datas, convert_file, cls=NumpyEncoder)
-        #print(datas)
-elif h_size==-1:
+elif h_size == -1:
     for ch_size in batches[dim].keys():
         batch_h = batches[dim][ch_size]
         filename = '{}/Hessians_dim_{}_N_100.json'.format(in_dir, dim)
