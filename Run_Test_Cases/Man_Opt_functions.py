@@ -20,10 +20,8 @@ else:
 
 from Utils.Function_utils import compute_function, compute_hessian_orig_2d, \
     compute_gradient_orig_2d, noise_function
-
-
 from Libs.Grid_Search import *
-from Libs.Optimization import get_rank_svd
+from Utils.Generation_utils import get_rank_svd
 from Libs.sbd_noise_robust import get_U
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
@@ -90,8 +88,6 @@ if __name__ == '__main__':
             1 / 4: math.pi / 2,
             1 / 8: 1.0}
     }
-    pen = 1
-    lambd = 0.00001 if pen == 2 else 0.01
     N_test_c = 50
     dtype = torch.float64
     with open('{}/{}'.format(in_dir, test_cases)) as convert_file:
@@ -113,10 +109,10 @@ if __name__ == '__main__':
             eps1 = 3 if (NN_train or cov is not None) else 3
             eps2 = 2 if (NN_train or cov is not None) else 3
             y_test = compute_function(x_test, ground_truth)
-            gradF_orig =  compute_gradient_orig_2d(
+            gradF_orig = compute_gradient_orig_2d(
                 x_test, ground_truth)
             gradient = gradF_orig
-            hessianF_orig =  compute_hessian_orig_2d(x_test.clone(), ground_truth)
+            hessianF_orig = compute_hessian_orig_2d(x_test.clone(), ground_truth)
             if cov is not None:
                 gradient_noise = noise_function(x_test.clone(), cov=cov, type='0', dtype=dtype)
                 hessian_noise = noise_function(x_test.clone(), cov=cov, type='1', dtype=dtype)
@@ -169,13 +165,13 @@ if __name__ == '__main__':
                     data[j]['M']['gt']['Grid_search'][b_ad_inner] = {}
                     data[j]['R']['gt']['Grid_search'][b_ad_inner] = {}
                     data[j]['loss']['gt']['Grid_search'][b_ad_inner] = {}
-                    data[j]['time']['gt']['Grid_search'][b_ad_inner] = {}
+                    #data[j]['time']['gt']['Grid_search'][b_ad_inner] = {}
                     hessian_rank_b = hessian_rank_blocks[:, b_ad:b_ad + b, b_ad:b_ad + b]
                     hessian_b = hessian_blocks[:, b_ad:b_ad + b, b_ad:b_ad + b]
                     batch_h = batches[b][h_size]
                     if h_size == 1 / 2 or run_man_opt:
                         result_man_opt = run_Man_Opt(
-                            hessian_rank_b, v[b, b], optimizer_method=Method.Manifold_Opt,
+                            hessian_rank_b, optimizer_method=Method.Manifold_Opt,
                             h=h_size, batch_h=batch_h, N_epochs=N_epochs,
                             opt_method=opt_method, learning_rate=learning_rate)
                         Bs_man_opt, losses_man_opt, times_man_opt = result_man_opt
@@ -194,7 +190,7 @@ if __name__ == '__main__':
                         #data[j]['time']['gt']['Man_Opt'][b_ad_inner]['la'] = times_man_opt[0]
                         #data[j]['time']['gt']['Man_Opt'][b_ad_inner]['re'] = times_man_opt[1]
 
-                    result_man_opt_gs, result_grid_search = run_Man_Opt(hessian_rank_b, v[b, b], optimizer_method=Method.Manifold_Opt_GS,
+                    result_man_opt_gs, result_grid_search = run_Man_Opt(hessian_rank_b, optimizer_method=Method.Manifold_Opt_GS,
                         h=h_size, batch_h=batch_h, N_epochs=N_epochs, opt_method=opt_method, learning_rate=learning_rate)
                     Bs_man_opt_gs, losses_man_opt_gs, times_man_opt_gs = result_man_opt_gs
 

@@ -1,6 +1,7 @@
 import torch
 import math
 import json
+from enum import Enum
 from Libs.Grid_Search import Method
 
 if torch.cuda.is_available():
@@ -25,8 +26,11 @@ batches = {
         1 / 8: 1.0}
 }
 
+class Init_Method(Enum):
+    RI = 1
+    GS = 2
 
-def get_total_Rot(data, j, random_init=False):
+def get_total_Rot(data, j, init_method=Init_Method.RI):
     '''
 
     :param data:
@@ -49,7 +53,7 @@ def get_total_Rot(data, j, random_init=False):
     for b in BlockSizes:
         if b > 1 and b <= 5:
             b_ad_inner_ = str(b_ad_inner)
-            if random_init:
+            if init_method == Init_Method.RI:
                 U_La_[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(data[j]['R']['gt']['Man_Opt'][b_ad_inner_]['la'])
 
                 U_Rgd_[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(data[j]['R']['gt']['Man_Opt'][b_ad_inner_]['re'])
@@ -65,7 +69,6 @@ def get_total_Rot(data, j, random_init=False):
 
 def compute_hessian_rotmatrix(data, method, noise_data=False, noisy_rot=False, basis_hess=False, p=1):
     '''
-
     :param data:
     :param method:
     :param noise_data:
@@ -99,10 +102,8 @@ def compute_hessian_rotmatrix(data, method, noise_data=False, noisy_rot=False, b
         print('\n p is not defined')
         exit(1)
 
-
 def get_len_loss(names, out_dir):
     '''
-
     :param names:
     :param out_dir:
     :return:
@@ -141,7 +142,6 @@ def get_len_loss(names, out_dir):
 
 def loss_function12(rot, hessian, eps=0):
     '''
-
     :param rot:
     :param hessian:
     :param eps:
@@ -165,7 +165,7 @@ def loss_function12(rot, hessian, eps=0):
         return loss
 
 
-def loss_function_sparse(rot, hessian, upper=False):
+def loss_function_sparse(rot, hessian):
     '''
 
     :param rot:
@@ -177,13 +177,9 @@ def loss_function_sparse(rot, hessian, upper=False):
         rot = rot.to(torch.float64)
     if hessian.dtype == torch.float32:
         hessian = hessian.to(torch.float64)
-    if not upper:
-        res = torch.matmul(torch.matmul(rot, hessian), rot.t())
-        res2 = ((res.abs() ** 2).mean(dim=0) ** .25).sqrt()  # **.5
-        loss = (res2.sum()) ** 2
-    else:
-        res = torch.matmul(torch.matmul(rot, hessian), rot.t())
-        res2 = ((res.abs() ** 2).mean(dim=0) ** .25).sqrt()  # **.5
-        loss = (torch.triu(res2, diagonal=1).sum()) ** 2
+
+    res = torch.matmul(torch.matmul(rot, hessian), rot.t())
+    res2 = ((res.abs() ** 2).mean(dim=0) ** .25).sqrt()  # **.5
+    loss = (res2.sum()) ** 2
     return loss
 
