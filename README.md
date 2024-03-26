@@ -26,7 +26,7 @@ To run the code, the following packages have to be installed
 When you are using this code, please cite the paper
 
 <a id="1">[1]</a> Fatima Antarou Ba, Oleh Melnyk, Christian Wald, Gabriele Steidl. **Sparse additive function decompositions facing basis transforms**. 
-2024 ARXIV; [2403.15563]([https://doi.org/10.3390/a15090311](https://arxiv.org/abs/2403.15563)) 
+2024; [arXiv:2403.15563](https://arxiv.org/abs/2403.15563) 
 
 This paper also explains the algorithms in more detail.
 
