@@ -42,7 +42,7 @@ def func2():
 
     d = 7
     blocks = [[0, 1, 3, 6], [2, 4, 5]]
-    cops = [[0, 6], [0, 3], [1, 6], [2, 4], [4, 5]]
+    J = [[0, 6], [0, 3], [1, 6], [2, 4], [4, 5]]
     max_block_size = 4
     t_sub_function_indices = [[0, 0], [4, 2], [1, 2], [2, 1], [0, 0]]
     t_num_sub_function_entries = [2, 2, 2, 2, 2]
@@ -56,7 +56,7 @@ def func2():
     ground_truth['max_block_size'] = max_block_size
     ground_truth['K'] = len(t_num_sub_function_entries)
     ground_truth['blocs'] = blocks
-    ground_truth['J'] = cops
+    ground_truth['J'] = J
     ground_truth['num_samples'] = int(1e2)
     ground_truth['t_sub_function_indices'] = [u for u in t_sub_function_indices]
     ground_truth['t_num_sub_function_entries'] = t_num_sub_function_entries
