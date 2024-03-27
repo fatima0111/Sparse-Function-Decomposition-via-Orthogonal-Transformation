@@ -1,3 +1,4 @@
+import numpy
 import torch
 import itertools
 if torch.cuda.is_available():
@@ -95,22 +96,31 @@ def compute_hessian_autograd(x, ground_truth):
         hessian_[i, :, :] = val.squeeze()
     return hessian_
 
-def compute_gradient_autograd(x, ground_truth):
+def compute_gradient_autograd(x, ground_truth=None, func=None):
     '''
     :param x:
     :param ground_truth:
     :param model:
     :return:
     '''
-    def f(ground_truth):
+    def f(ground_truth, func):
         def get_random(x):
-            return compute_function(x, ground_truth=ground_truth)
+            if ground_truth is not None:
+                return compute_function(x, ground_truth=ground_truth)
+            else:
+                #if type(x) == torch.Tensor:
+                #    x = x.cpu().numpy()
+                return torch.as_tensor(func(x))
         return get_random
+    print("x.dtype == numpy.ndarray: ", x.dtype)
+    if type(x) == numpy.ndarray:
+        x = torch.as_tensor(x)
+        print(type(x))
     gradient = torch.zeros_like(x.T)
     for i in range(x.shape[0]):
         x_i = x[i:i+1, :]
         x_i.required_grad = True
-        gradient[:, i] = torch.autograd.functional.jacobian(f(ground_truth), x_i, create_graph=True)
+        gradient[:, i] = torch.autograd.functional.jacobian(f(ground_truth, func), x_i, create_graph=True)
     return gradient.detach()
 
 
