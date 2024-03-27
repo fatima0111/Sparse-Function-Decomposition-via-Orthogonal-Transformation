@@ -1,10 +1,9 @@
 import torch
 import math
-def rot_12(a):
+def U_12(a):
     '''
-    Compute 2d-Rotation matrices
-
-    :param a: angle a \in R or a 2d-array of angles
+    Compute 2d-Rotation matrices U
+    :param a: ndarray (N,) angles a in [0, 2*pi] or a  of angles according to Proposition C.1
     :return: 2x2 Rotation matrix corresponding to a or an array of rotation matrices of size 2x2
     '''
     cos_ = a.cos()
@@ -15,9 +14,10 @@ def rot_12(a):
 
 def generate_indices(d):
     '''
-    Generate indices of
+    Generates indices of ndarray angle of size (N, p) according to Proposition C.1
+    where p=d(d-1)/2
     :param d: dimension
-    :return: indices
+    :return: list of indices
     '''
     indices = []
     for i in range(d-1):
@@ -27,9 +27,10 @@ def generate_indices(d):
 
 def generate_angles_interval(d):
     '''
-
-    :param d:
-    :return:
+    Generates upperbound of the intervals of each component of the d(d-1)/2-dimensional angle
+    according to Proposition C.1
+    :param d: dimension
+    :return: list of upperbond of length d(d-1)/2
     '''
     angles = []
     for i in range(d - 1):
@@ -39,15 +40,15 @@ def generate_angles_interval(d):
             else:
                 angles.append(math.pi)
     return angles
-def compute_rot(d, alpha):
+def compute_rotation_U(d, alpha):
     '''
-    :param d:
-    :param alpha:
-    :return:
+    :param d: dimension
+    :param alpha: ndarray of angle of size (N, p), where p=d(d-1)/2
+    :return: ndarray (N, d, d) of rotation matrices
     '''
     I = generate_indices(d)
-    Rot = torch.eye(d).reshape(1, d, d)
-    Rot = torch.tile(Rot, (alpha.shape[0], 1, 1))
+    U = torch.eye(d).reshape(1, d, d)
+    U = torch.tile(U, (alpha.shape[0], 1, 1))
     for ik, k in enumerate(I):
-        Rot[:, :, k[0]:k[1] + 1] = torch.matmul(Rot[:, :, k[0]:k[1] + 1], rot_12(alpha[:, ik]))
-    return Rot
+        U[:, :, k[0]:k[1] + 1] = torch.matmul(U[:, :, k[0]:k[1] + 1], U_12(alpha[:, ik]))
+    return U

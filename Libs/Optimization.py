@@ -6,7 +6,7 @@ from torch.optim.lr_scheduler import MultiplicativeLR
 import torch
 import time
 import math
-from Libs.Rotations import compute_rot
+from Libs.Rotations import compute_rotation_U
 
 
 if torch.cuda.is_available():
@@ -131,7 +131,7 @@ def random_init(hessian, method=RiemannianSGD, D=5, n_inits=5, n_init_epochs=int
     t1 = time.time()
     alphas = np.random.uniform(0, 2 * math.pi, size=(n_inits, int(D * (D - 1) / 2)))
     alphas = torch.as_tensor(alphas)
-    init_weights = compute_rot(D, alphas)
+    init_weights = compute_rotation_U(D, alphas)
     for n_init in range(n_inits):
         init_weight = init_weights[n_init, :, :]
         param = geoopt.ManifoldParameter(

@@ -28,7 +28,7 @@ def generate_components(input_data, v, cops, blocks,
 
     :param K:
     :param dimension:
-    :param max_components:
+    :param max_block_size:
     :return:
     '''
     #np.random.seed(10)
@@ -66,11 +66,11 @@ def generate_components(input_data, v, cops, blocks,
         out_f += f_part
     ground_truth = {}
     ground_truth['n'] = dimension
-    ground_truth['max_components'] = max([len(block) for block in blocks
+    ground_truth['max_block_size'] = max([len(block) for block in blocks
                                           ]) if len(blocks)>0 else 2
     ground_truth['K'] = len(t_num_sub_function_entries)
-    ground_truth['Blocs'] = blocks
-    ground_truth['U'] = cops
+    ground_truth['blocs'] = blocks
+    ground_truth['J'] = cops
     ground_truth['num_samples'] = int(1e2)
     ground_truth['t_sub_function_indices'] = [u.tolist() for u in t_sub_function_indices]
     ground_truth['t_num_sub_function_entries'] = t_num_sub_function_entries
@@ -83,14 +83,14 @@ if __name__ == '__main__':
             'Grid_search': {},
             'Man_Opt': {
                 'la': {},
-                're': {}
+                'rgd': {}
             },
             'Man_Opt_GS': {
                 'la': {},
-                're': {}
+                'rgd': {}
             }
         }
-    tmp = {'gt': copy.deepcopy(tmp1), 'noise': copy.deepcopy(tmp1)}
+    tmp = {'clean': copy.deepcopy(tmp1), 'noisy': copy.deepcopy(tmp1)}
     Output = {}
     N_run = 10
     output_folder = dirname(dirname(abspath(__file__)))+'/Test_Cases_Man_Opt_GS'
@@ -98,25 +98,25 @@ if __name__ == '__main__':
     for j in range(N_run):
         Output[j] = {}
         dim = np.random.randint(4, 9) if gen_block else np.random.randint(5, 8)
-        N_hessian = 100 * dim
-        N_gradient = 100 * dim
+        #N_hessian = 100 * dim
+        #N_gradient = 100 * dim
         num_samples = int(1e2) * dim
-        Output[j]['dim'] = dim
+        Output[j]['d'] = dim
 
         Output[j]['n'] = num_samples
-        Output[j]['n_g'] = N_gradient
-        Output[j]['n_h'] = N_hessian
+        #Output[j]['n_g'] = N_gradient
+        #Output[j]['n_h'] = N_hessian
         if gen_block:
             probs = np.array([.25, .37, .38])
-            max_components = np.random.choice(range(3, 5), p=probs)
-            K = math.floor(dim / max_components)
+            max_block_size = np.random.choice(range(3, 5), p=probs)
+            K = math.floor(dim / max_block_size)
             # K = np.random.choice([K_, math.floor(K_ / 2) + 1], p=[0.5, 0.5])
-            print("\n dim {} max_components {} K {} \n".format(dim, max_components, K))
-            Output[j]['max_components'] = max_components
+            print("\n dim {} max_block_size {} K {} \n".format(dim, max_block_size, K))
+            Output[j]['max_block_size'] = max_block_size
             Output[j]['K'] = K
-            cop, blocks = generate_block_components(d=dim, K=K, max_components=max_components,
-                                                    probs=np.array(probs[:max_components -1]) / np.sum(np.array(
-                                                        probs[:max_components -1])), add_diag=False)
+            cop, blocks = generate_block_components(d=dim, K=K, max_block_size=max_block_size,
+                                                    probs=np.array(probs[:max_block_size -1]) / np.sum(np.array(
+                                                        probs[:max_block_size -1])), add_diag=False)
         else:
             s = np.random.randint(1, int(dim * (dim - 1) / 2 + 1))
             print('s= ', s)
@@ -128,11 +128,11 @@ if __name__ == '__main__':
         input_data = (2 * torch.rand(num_samples, dim, dtype=torch.float64) - 1)
         target_val, ground_truth = generate_components(input_data, R, cop, blocks, poss_=[1, 2], start_k=2)
         Output[j]['x_test'] = input_data
-        ground_truth['coeff'] = (20 - 5)*torch.rand(len(ground_truth['U'])) + 5
+        ground_truth['coeff'] = (20 - 5)*torch.rand(len(ground_truth['J'])) + 5
         Output[j]['time'] = copy.deepcopy(tmp)
         Output[j]['loss'] = copy.deepcopy(tmp)
-        Output[j]['M'] = copy.deepcopy(tmp)
-        Output[j]['U'] = copy.deepcopy(tmp)
+        Output[j]['hessian_U'] = copy.deepcopy(tmp)
+        Output[j]['J'] = copy.deepcopy(tmp)
         ground_truth['R'] = R
         hessianF_orig = lambda x_val: compute_hessian_orig_2d(
             x_val, ground_truth, return_coupling=True)
@@ -144,11 +144,11 @@ if __name__ == '__main__':
                 copy_J_.remove(u)
         #remain = [u for u in U_ if u not in U]
         print([u for u in copy_J_ if u not in J])
-        ground_truth['_true'] = copy_J_
+        ground_truth['J_true'] = copy_J_
 
         Num_non_zero_elements = []
         if gen_block:
-            for bloc in ground_truth['Blocs']:
+            for bloc in ground_truth['blocs']:
                 hessian_b_o = hessian_o[:, bloc, :]
                 hessian_b_o = hessian_b_o[:, :, bloc].abs().mean(dim=0)
                 hessian_b_o[hessian_b_o != torch.clamp(hessian_b_o, 1e-6)] = 0

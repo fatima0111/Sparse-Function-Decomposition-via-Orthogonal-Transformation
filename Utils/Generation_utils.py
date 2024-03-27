@@ -32,27 +32,27 @@ def generate_cop(d=5, s=5):
     J = random.sample(candidates, s)#[0]
     print('\n d={} s {}'.format(d, s), J)
     return J
-def generate_block_components(d, K, max_components=4,
+def generate_block_components(d, K, max_block_size=4,
                               probs=None, add_diag=True, dense=None):
     '''
     Generates randomly a set of jointly non-sparse entries having a block form according to
     :param d: dimension
     :param K: number of blocks
-    :param max_components: maximal size of the blocs
+    :param max_block_size: maximal size of the blocs
     :param probs:
     :param add_diag:
     :param dense:
     :return: J
     '''
     blocks = []
-    assert (K * max_components <= d)
-    print(probs, len(range(2, max_components+1)))
-    assert (probs is None or len(probs) == len(range(2, max_components+1)))
+    assert (K * max_block_size <= d)
+    print(probs, len(range(2, max_block_size+1)))
+    assert (probs is None or len(probs) == len(range(2, max_block_size+1)))
     source = list(range(0, d))
     U = []
     for k in range(K):# K= Number of subgraphs
-        ds = np.random.choice(range(2, max_components+1), p=probs)
-        block = np.random.choice(source, ds, replace=False)#number of node in the subgrad G_k
+        ds = np.random.choice(range(2, max_block_size+1), p=probs)
+        block = np.random.choice(source, ds, replace=False)
         source1 = [source[i] for i in range(len(source)) if source[i] not in block]
         source = source1
         couplings = list(itertools.product(block, block))
@@ -61,37 +61,37 @@ def generate_block_components(d, K, max_components=4,
         nonhomogeneous_coupling = [u for u in couplings if u[0] != u[1]]
         homogeneous_couplings = [u for u in couplings if u[0] == u[1]]
         copy_cop = copy.deepcopy(nonhomogeneous_coupling)
-        U_k=[]
+        J_k=[]
         num_ = {}
         for j in block:
             num_[j] = 0
         N_block = 1 if ds == 2 else len(block)-1
-        while len(U_k) < N_block:
+        while len(J_k) < N_block:
             ind_ = np.random.choice(list(range(len(
                 copy_cop))), 1)[0]
             inner_u = copy_cop[ind_]
             if num_[inner_u[0]] < 2 and num_[inner_u[1]] < 2:
-                U_k.append(inner_u)
+                J_k.append(inner_u)
                 num_[inner_u[0]] += 1
                 num_[inner_u[1]] += 1
             copy_cop.remove(inner_u)
         dense_ = bool(np.random.randint(1)) if dense is None else dense
         if dense_:
-            rest = [u for u in nonhomogeneous_coupling if u not in U_k]
+            rest = [u for u in nonhomogeneous_coupling if u not in J_k]
             ds_inner = np.random.choice(1, len(rest)//2)
             indices = np.random.choice(list(range(len(rest))), ds_inner)
             if ds_inner != 0:
-                U_k += [rest[i] for i in indices]
-        block = list(set().union(*U_k))
+                J_k += [rest[i] for i in indices]
+        block = list(set().union(*J_k))
         if add_diag:
-            n_block = np.random.randint(len(set([l for v in U_k for l in v])))
+            n_block = np.random.randint(len(set([l for v in J_k for l in v])))
             n_diag = np.random.choice(list(set().union(*homogeneous_couplings)), size=n_block, replace=False)
             for n in range(n_block):
-                U_k.append([n_diag[n], n_diag[n]])
+                J_k.append([n_diag[n], n_diag[n]])
         blocks.append(block)
-        U += U_k
-    print('blocks: ', blocks, "U: ", U)
-    return U, blocks
+        J += J_k
+    print('blocks: ', blocks, "J: ", )
+    return J, blocks
 
 
 def random_w_pattern(J, d=5):

@@ -11,10 +11,14 @@ from Utils.Function_utils import compute_gradient_autograd
 
 ############################################
 def plot_f1(a, k=np.sqrt(2)/2):
-    matplotlib.rcParams['mathtext.fontset'] = 'cm'
-    #a = -math.pi/4
-    U = np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
+    '''
 
+    :param a:
+    :param k:
+    :return:
+    '''
+    matplotlib.rcParams['mathtext.fontset'] = 'cm'
+    U = np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
     st = 2 * math.pi + math.pi
     x, z = np.meshgrid(np.arange(-st, st, math.pi / 32),
                        np.arange(-st / 4, st / 4, math.pi / 128))
@@ -41,8 +45,7 @@ def plot_f1(a, k=np.sqrt(2)/2):
                 return 0*np.sin(k * U_[:, 0] @ U_ @ val) + np.sin(k * (U_[:, 1] @ U_ @ val))
         return f_g
 
-    fig, ax = plt.subplots(figsize=(11, 11),
-                           subplot_kw={'projection': '3d'})
+    fig, ax = plt.subplots(figsize=(11, 11), subplot_kw={'projection': '3d'})
     f = f_(U)
     func = f(xy).reshape(x1.shape)
     colormap_func = plt.get_cmap('viridis')((func - func.min()) / func.ptp())
@@ -59,8 +62,6 @@ def plot_f1(a, k=np.sqrt(2)/2):
     ax.set_zlabel(r'$f(x_{1},x_{2})$', font="CMU Serif", fontsize=20)
     plt.tight_layout()
     plt.savefig(root + '/f1.png')
-
-
     ##################################### Rotate input space #############################
     fig, ax = plt.subplots(figsize=(11, 11),
                            subplot_kw={'projection': '3d'})
@@ -68,11 +69,9 @@ def plot_f1(a, k=np.sqrt(2)/2):
     func = f(xy).reshape(x1.shape)
     colormap_func = plt.get_cmap('viridis')((func - func.min()) / func.ptp())
     Z_bar = np.vstack([Z[-1, :], func[0, :]])
-    colormap_bar = np.full(Z_bar.shape + (4,), [1, 1, 1,
-                                                0])
+    colormap_bar = np.full(Z_bar.shape + (4,), [1, 1, 1, 0])
     Z_surf = np.vstack([Z, Z_bar, func])
     C_surf = np.vstack([colourmap_plane, colormap_bar, colormap_func])
-    # plot the joint datasets as a single surface, pass colors explicitly, set strides to 1
     ax.plot_surface(X_surf, Y_surf, Z_surf, facecolors=C_surf, rstride=1, cstride=1)
     print(X_surf.shape, Y_surf.shape, Z_surf.shape, C_surf.shape)
     ax.set_xlabel(r"$x_{1}$", font="CMU Serif", fontsize=20)
@@ -83,8 +82,7 @@ def plot_f1(a, k=np.sqrt(2)/2):
     plt.tight_layout()
     plt.savefig(root + '/f1_U.png')
 
-
-def plot_f2(a, k=4):
+def plot_f2(a, k=6):
     U = np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
     x = np.linspace(-1, 1, 100)
     y = np.linspace(-1, 1, 100)
@@ -167,6 +165,6 @@ if __name__ == '__main__':
     a = math.pi/4
     root = in_dir = dirname(dirname(abspath(__file__))) + '/Plots/Bivariate_functions'
     print(root)
-    plot_f1(a)
+    #plot_f1(a)
     plot_f2(a)
     plt.show()

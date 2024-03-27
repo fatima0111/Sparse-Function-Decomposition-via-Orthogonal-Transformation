@@ -21,7 +21,7 @@ else:
     device = torch.device('cpu')
 
 from Libs.Optimization import stiefel_manifold_opt
-from Libs.Rotations import compute_rot, generate_angles_interval
+from Libs.Rotations import compute_rotation_U, generate_angles_interval
 
 class Method(Enum):
     Manifold_Opt = 1
@@ -231,7 +231,7 @@ class Grid_Search:
         points = self.discretize_grid()
         if points.ndim == 1:
             points = points.unsqueeze(dim=1)
-        rotations = compute_rot(self.d, points)
+        rotations = compute_rotation_U(self.d, points)
         time_rot = time.time()-t1
         output, output_noisy = self.loss(rotations, datas=datas, hessians=hessians)
         losses, rotations, times_losses = output
