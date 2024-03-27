@@ -55,7 +55,8 @@ This paper also explains the algorithms in more detail.
 
 Copyright (c) 2024 [Fatima Antarou Ba](https://www.tu.berlin/imageanalysis/ueber-uns/team), [Oleh Melnyk](https://olehmelnyk.xyz/), [Christian Wald](https://www.tu.berlin/imageanalysis/ueber-uns/team), [Gabriele Steidl](https://page.math.tu-berlin.de/~steidl/)
 
-This software was written by Fatima Antarou Ba and Christian Wald and Oleh Melnyk. It was developed at the Institute of Mathematics, TU Berlin. The first mentioned author acknowledges support by the German Research Foundation within the Bundesministerium für Bildung und Forshung within the Sale project.
+This software was written by Fatima Antarou Ba and Christian Wald and Oleh Melnyk. It was developed at the Institute of Mathematics, TU Berlin. Fatima Antarou Ba acknowledges support by the German Research Foundation within the Bundesministerium für Bildung und Forshung within the Sale project. Christian Wald acknowledges funding by the DFG within the SFB “Tomography Across the Scales” (STE 571/19-1, project
+number: 495365311).
 
 SFD is free software. You can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. If not stated otherwise, this applies to all files contained in this package and its sub-directories.
 
