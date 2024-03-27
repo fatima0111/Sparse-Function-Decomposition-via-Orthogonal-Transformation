@@ -49,7 +49,7 @@ def generate_block_components(d, K, max_block_size=4,
     print(probs, len(range(2, max_block_size+1)))
     assert (probs is None or len(probs) == len(range(2, max_block_size+1)))
     source = list(range(0, d))
-    U = []
+    J = []
     for k in range(K):# K= Number of subgraphs
         ds = np.random.choice(range(2, max_block_size+1), p=probs)
         block = np.random.choice(source, ds, replace=False)

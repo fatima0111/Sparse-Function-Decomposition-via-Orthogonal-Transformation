@@ -156,7 +156,7 @@ if __name__ == '__main__':
             print(Num_non_zero_elements)
             ground_truth['non_zero_block'] = Num_non_zero_elements
         Output[j]['groundtruth'] = ground_truth
-        ground_truth['R'] = R
+        #ground_truth['R'] = R
     print('\nsaving file.....')
     with open('{}/Test_functions_N_{}.json'.format(output_folder, N_run), 'w') as convert_file:
         json.dump(Output, convert_file, cls=NumpyEncoder)
