@@ -6,6 +6,12 @@ Two tipical examples are given by the Anchored and the Anova decomposition. The 
 has a sparse decomposition, i.e. most of the summands in .. vanish. In  our work we relate each term f_u to the partial derivative of the function. Later we formule some optimization problems on the partial derivatives in order to get the orthogonal matrix such that the new function has a sparse decomposition. 
 Numerical examples on random sampled matrices and later on functions shows the reliability of the algorithm.
 
+<p align="center">
+<img src="https://github.com/fatima0111/Sparse-Function-Decomposition-via-Orthogonal-Transformation/blob/main/Plots/Bivariate_functions/all_f2.png" width="500" height="500">
+</p>
+<p align="center"> 
+    <em>Computing fixed support image barycenter with NFFT-Sinkhorn algorithm where the four corner images are given </em>
+</p>
 
 ## Prerequisites
 To run the code, the following packages have to be installed
@@ -49,7 +55,8 @@ This paper also explains the algorithms in more detail.
 
 Copyright (c) 2024 [Fatima Antarou Ba](https://www.tu.berlin/imageanalysis/ueber-uns/team), [Oleh Melnyk](https://olehmelnyk.xyz/), [Christian Wald](https://www.tu.berlin/imageanalysis/ueber-uns/team), [Gabriele Steidl](https://page.math.tu-berlin.de/~steidl/)
 
-This software was written by Fatima Antarou Ba and Christian Wald and Oleh Melnyk. It was developed at the Institute of Mathematics, TU Berlin. The first mentioned author acknowledges support by the German Research Foundation within the Bundesministerium für Bildung und Forshung within the Sale project.
+This software was written by Fatima Antarou Ba and Christian Wald and Oleh Melnyk. It was developed at the Institute of Mathematics, TU Berlin. Fatima Antarou Ba acknowledges support by the German Research Foundation within the Bundesministerium für Bildung und Forshung within the Sale project. Christian Wald acknowledges funding by the DFG within the SFB “Tomography Across the Scales” (STE 571/19-1, project
+number: 495365311).
 
 SFD is free software. You can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. If not stated otherwise, this applies to all files contained in this package and its sub-directories.
 
