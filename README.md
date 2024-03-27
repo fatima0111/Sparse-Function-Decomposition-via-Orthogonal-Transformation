@@ -6,7 +6,12 @@ Two tipical examples are given by the Anchored and the Anova decomposition. The 
 has a sparse decomposition, i.e. most of the summands in .. vanish. In  our work we relate each term f_u to the partial derivative of the function. Later we formule some optimization problems on the partial derivatives in order to get the orthogonal matrix such that the new function has a sparse decomposition. 
 Numerical examples on random sampled matrices and later on functions shows the reliability of the algorithm.
 
-
+<p align="center">
+<img src="https://github.com/fatima0111/Sparse-Function-Decomposition-via-Orthogonal-Transformation/blob/main/Plots/Bivariate_functions/all_f2.png" width="600" height="400">
+</p>
+<p align="center"> 
+    <em>Computing fixed support image barycenter with NFFT-Sinkhorn algorithm where the four corner images are given </em>
+</p>
 ## Prerequisites
 To run the code, the following packages have to be installed
 
