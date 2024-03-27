@@ -12,6 +12,7 @@ Numerical examples on random sampled matrices and later on functions shows the r
 <p align="center"> 
     <em>Computing fixed support image barycenter with NFFT-Sinkhorn algorithm where the four corner images are given </em>
 </p>
+
 ## Prerequisites
 To run the code, the following packages have to be installed
 
