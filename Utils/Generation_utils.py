@@ -67,8 +67,7 @@ def generate_block_components(d, K, max_block_size=4,
             num_[j] = 0
         N_block = 1 if ds == 2 else len(block)-1
         while len(J_k) < N_block:
-            ind_ = np.random.choice(list(range(len(
-                copy_cop))), 1)[0]
+            ind_ = np.random.choice(list(range(len(copy_cop))), 1)[0]
             inner_u = copy_cop[ind_]
             if num_[inner_u[0]] < 2 and num_[inner_u[1]] < 2:
                 J_k.append(inner_u)

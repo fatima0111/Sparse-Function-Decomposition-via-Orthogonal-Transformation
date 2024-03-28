@@ -8,7 +8,7 @@ from Utils.Evaluation_utils import batches
 from Libs.sbd_noise_robust import get_U
 from Utils.Generation_utils import get_rank_svd
 from Utils.Evaluation_utils import Init_Method
-from Generate_Datasets.ANOVA_decomp_functions import *
+from Generate_Datasets.Generate_bivariate_functions import *
 from Utils.Evaluation_utils import NumpyEncoder
 
 def set_gt(ground_truths):

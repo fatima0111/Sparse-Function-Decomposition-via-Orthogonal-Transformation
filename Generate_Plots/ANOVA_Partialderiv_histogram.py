@@ -76,14 +76,11 @@ if __name__ == '__main__':
                 for j in datas.keys():
                     dim = datas[str(j)]['dim']
                     Rot_la, Rot_re = get_total_Rot(datas, str(j), init_method=init_method)
-                    hessian_supp = torch.as_tensor(datas['0']['svd_basis'])
-                    supp = hessian_supp.shape[1]
-                    N = hessian_supp.shape[0]
                     x_test = torch.as_tensor(datas[str(j)]['x_test'])
                     ground_truth = datas[str(j)]['groundtruth']
-                    ground_truth['v'] = torch.as_tensor(ground_truth['v'])
-                    U = torch.as_tensor(datas[str(j)]['grad_U'])
-                    Rot = Rot_re.T
+                    ground_truth['R'] = torch.as_tensor(ground_truth['R'])
+                    #U_v = torch.as_tensor(datas[str(j)]['U_v'])
+                    #Rot = Rot_re.T
                     suff_ = '_cov_{}'.format(cov) if cov is not None else ''
                     fname = ''
                     if init_method == Init_Method.GS:
