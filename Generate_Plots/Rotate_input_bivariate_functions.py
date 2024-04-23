@@ -25,12 +25,10 @@ def plot_f1(a, k=np.sqrt(2)/2):
     X = x.T
     Z = z.T
     Y = 0 * np.ones((X.shape[0], X.shape[0])) + math.pi / 8
-
     colourmap_plane = np.full(X.shape + (4,), [0, 0.2, 0.2, .1])
     r = np.arange(-st, st, math.pi / 32)
     x1, x2 = np.meshgrid(r, r)
     xy = np.array([x1.flatten(), x2.flatten()]).T
-
     X_bar = np.vstack([X[-1, :], x1[0, :]])
     Y_bar = np.vstack([Y[-1, :], x2[0, :]])
 
@@ -44,7 +42,6 @@ def plot_f1(a, k=np.sqrt(2)/2):
             else:
                 return 0*np.sin(k * U_[:, 0] @ U_ @ val) + np.sin(k * (U_[:, 1] @ U_ @ val))
         return f_g
-
     fig, ax = plt.subplots(figsize=(11, 11), subplot_kw={'projection': '3d'})
     f = f_(U)
     func = f(xy).reshape(x1.shape)
@@ -55,11 +52,11 @@ def plot_f1(a, k=np.sqrt(2)/2):
     C_surf = np.vstack([colourmap_plane, colormap_bar, colormap_func])
     ax.plot_surface(X_surf, Y_surf, Z_surf, facecolors=C_surf, rstride=1, cstride=1)
     print(X_surf.shape, Y_surf.shape, Z_surf.shape, C_surf.shape)
-    ax.set_xlabel(r"$x_{1}$", font="CMU Serif", fontsize=20)
-    ax.set_ylabel(r"$x_{2}$", font="CMU Serif", fontsize=20)
+    #ax.set_xlabel(r"$x_{1}$", font="CMU Serif", fontsize=20)
+    #ax.set_ylabel(r"$x_{2}$", font="CMU Serif", fontsize=20)
     ax.set_xticks(np.arange(-10, 10 + 1, 5.0))
     ax.set_yticks(np.arange(-10, 10 + 1, 5.0))
-    ax.set_zlabel(r'$f(x_{1},x_{2})$', font="CMU Serif", fontsize=20)
+    ax.set_zlabel(r'$f^1(x_{1},x_{2})$', font="CMU Serif", fontsize=30)
     plt.tight_layout()
     plt.savefig(root + '/f1.png')
     ##################################### Rotate input space #############################
@@ -74,11 +71,11 @@ def plot_f1(a, k=np.sqrt(2)/2):
     C_surf = np.vstack([colourmap_plane, colormap_bar, colormap_func])
     ax.plot_surface(X_surf, Y_surf, Z_surf, facecolors=C_surf, rstride=1, cstride=1)
     print(X_surf.shape, Y_surf.shape, Z_surf.shape, C_surf.shape)
-    ax.set_xlabel(r"$x_{1}$", font="CMU Serif", fontsize=20)
-    ax.set_ylabel(r"$x_{2}$", font="CMU Serif", fontsize=20)
+    #ax.set_xlabel(r"$x_{1}$", font="CMU Serif", fontsize=20)
+    #ax.set_ylabel(r"$x_{2}$", font="CMU Serif", fontsize=20)
     ax.set_xticks(np.arange(-10, 10 + 1, 5.0))
     ax.set_yticks(np.arange(-10, 10 + 1, 5.0))
-    ax.set_zlabel(r'$f_U(x_{1},x_{2})$', font="CMU Serif", fontsize=20)
+    ax.set_zlabel(r'$f_U^1(x_{1},x_{2})$', font="CMU Serif", fontsize=30)
     plt.tight_layout()
     plt.savefig(root + '/f1_U.png')
 
@@ -117,9 +114,9 @@ def plot_f2(a, k=6):
     CJ = plt.get_cmap('viridis')((Z - Z.min()) / Z.ptp())
     ax.plot_surface(X, Y, Z, cmap='viridis', rstride=1, cstride=1, facecolors=CJ)
     ax.set_zlim3d(-1.5, 1.5)
-    ax.set_xlabel(r"$x_{1}$", fontsize=16)
-    ax.set_ylabel(r"$x_{2}$", fontsize=16)
-    ax.set_zlabel(r'$f(x_1, x_2)$', font="CMU Serif", fontsize=16)
+    #ax.set_xlabel(r"$x_{1}$", fontsize=16)
+    #ax.set_ylabel(r"$x_{2}$", fontsize=16)
+    ax.set_zlabel(r'$f^2(x_1, x_2)$', font="CMU Serif", fontsize=25)
     ax.set_xticks(np.arange(-1, 1 + 1, 0.5))
     ax.set_yticks(np.arange(-1, 1 + 1, 0.5))
     plt.savefig(root + '/f2.png')
@@ -127,11 +124,11 @@ def plot_f2(a, k=6):
     fig = plt.figure(figsize=(6, 6))
     cs = plt.contourf(X_gr, Y_gr, grad, 20, cmap='RdGy')
     cbar = fig.colorbar(cs)
-    cbar.ax.set_ylabel(r"$\partial_{x_1}f(x_1, x_2)$", font="CMU Serif", fontsize=16)
+    cbar.ax.set_ylabel(r"$\partial_{x_1}f^2(x_1, x_2)$", font="CMU Serif", fontsize=30)
     plt.xticks(np.arange(-1, 1.02, 0.5))
     plt.yticks(np.arange(-1, 1.02, 0.5))
-    plt.xlabel(r"$x_{1}$", fontsize=16)
-    plt.ylabel(r"$x_{2}$", fontsize=16)
+    #plt.xlabel(r"$x_{1}$", fontsize=16)
+    #plt.ylabel(r"$x_{2}$", fontsize=16)
     plt.savefig(root + '/f2_grad_x1.png')
 
     Z_fU = func(U, rot_x=True)
@@ -144,9 +141,9 @@ def plot_f2(a, k=6):
     CJ = plt.get_cmap('viridis')((Z_U - Z_U.min()) / Z_U.ptp())
     ax.plot_surface(X, Y, Z_U, cmap='viridis', rstride=1, cstride=1, facecolors=CJ)
     ax.set_zlim3d(-1.5, 1.5)
-    ax.set_xlabel(r"$x_{1}$", fontsize=16)
-    ax.set_ylabel(r"$x_{2}$", fontsize=16)
-    ax.set_zlabel(r'$f_U(x_1, x_2)$', font="CMU Serif", fontsize=16)
+    #ax.set_xlabel(r"$x_{1}$", fontsize=16)
+    #ax.set_ylabel(r"$x_{2}$", fontsize=16)
+    ax.set_zlabel(r'$f_U^2(x_1, x_2)$', font="CMU Serif", fontsize=25)
     ax.set_xticks(np.arange(-1, 1 + 1, 0.5))
     ax.set_yticks(np.arange(-1, 1 + 1, 0.5))
     plt.savefig(root + '/f2_U.png')
@@ -154,17 +151,17 @@ def plot_f2(a, k=6):
     fig = plt.figure(figsize=(6, 6))
     cs = plt.contourf(X_gr, Y_gr, grad_U, 20, cmap='RdGy')
     cbar = fig.colorbar(cs)
-    cbar.ax.set_ylabel(r"$\partial_{x_1}f_U(x_1, x_2)$", font="CMU Serif", fontsize=16)
+    cbar.ax.set_ylabel(r"$\partial_{x_1}f_U^2(x_1, x_2)$", font="CMU Serif", fontsize=30)
     plt.xticks(np.arange(-1, 1.02, 0.5))
     plt.yticks(np.arange(-1, 1.02, 0.5))
-    plt.xlabel(r"$x_{2}$", fontsize=16)
-    plt.ylabel(r"$x_{2}$", fontsize=16)
+    #plt.xlabel(r"$x_{2}$", fontsize=16)
+    #plt.ylabel(r"$x_{2}$", fontsize=16)
     plt.savefig(root + '/f2_U_grad_x1.png')
 
 if __name__ == '__main__':
     a = math.pi/4
-    root = in_dir = dirname(dirname(abspath(__file__))) + '/Plots/Bivariate_functions'
+    root = dirname(dirname(abspath(__file__))) + '/Plots/Bivariate_functions'
     print(root)
-    #plot_f1(a)
+    plot_f1(a)
     plot_f2(a)
     plt.show()

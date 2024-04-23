@@ -37,7 +37,6 @@ def generate_components(input_data, J, blocks, max_subfunction_entries=2, probs=
     for k in range(K):
         sub_function_indices = np.random.choice(range(len(possible_sub_functions)),
                                 size=2, p=probs)
-
         var1 = np.random.choice([5, int(sub_function_indices[0])], p=[.55, .45])
         var2 = np.random.choice([5, int(sub_function_indices[0])], p=[.55, .45])
         sub_function_indices[0] = var1
@@ -51,8 +50,7 @@ def generate_components(input_data, J, blocks, max_subfunction_entries=2, probs=
     ground_truth['parameters'] = parameters
     ground_truth['max_block_size'] = max_block_size
     ground_truth['K'] = K
-    ground_truth['max_block_size'] = max([len(block) for block in blocks
-                                       ]) if len(blocks) > 0 else 2
+    ground_truth['max_block_size'] = max([len(block) for block in blocks]) if len(blocks) > 0 else 2
     ground_truth['J'] = J
     ground_truth['blocs'] = blocks
     return ground_truth
