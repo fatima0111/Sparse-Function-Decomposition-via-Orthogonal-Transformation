@@ -10,14 +10,15 @@ from Utils.Evaluation_utils import get_total_Rot, Init_Method, NumpyEncoder
 from Utils.Function_utils import compute_hessian_autograd, compute_gradient_autograd
 
 
-def findsubsets(dim, n):
+def findsubsets(d, n):
     '''
-    :param dim:
+    :param d:
     :param n:
     :return:
     '''
-    set_elem = set(itertools.combinations(set(range(dim)), n))
+    set_elem = set(itertools.combinations(set(range(d)), n))
     return [list(elem) for elem in list(set_elem)]
+
 
 def inclusive_anova_term(anova, ind, coup,  comp, d=7, recons=False):
     '''
@@ -30,7 +31,6 @@ def inclusive_anova_term(anova, ind, coup,  comp, d=7, recons=False):
     :param recons:
     :return:
     '''
-
     N = d
     x0, x1, x2, x3, x4, x5, x6 = tn.symbols(N)
     xs = [x0, x1, x2, x3, x4, x5, x6]
@@ -56,6 +56,7 @@ def inclusive_anova_term(anova, ind, coup,  comp, d=7, recons=False):
                     coup[str(ind)][key][j]['inf-norm'].append(float(ninf))
                     coup[str(ind)][key][j]['1-norm'].append(float(n1))
     return coup, comp
+
 
 def get_vanishing_indices(ground_truth, grad, hess, U, max_inter=None, clamp=1e-4):
     '''
@@ -87,7 +88,6 @@ def get_vanishing_indices(ground_truth, grad, hess, U, max_inter=None, clamp=1e-
     sorted_couplings = [tuple(u) for u in list(map(sorted, s_cop))]
     second_order_indices = [list(u) for u in list(set(sorted_couplings))]
     coopy = copy.deepcopy(second_order_indices)
-
     for ind_ in first_order_indices:
         for coupli in second_order_indices:
             if ind_[0] in coupli and coupli in coopy:
@@ -97,11 +97,11 @@ def get_vanishing_indices(ground_truth, grad, hess, U, max_inter=None, clamp=1e-
     #print('\n Hessian: ', H_mo, second_order_indices)
     two_interaction_set = findsubsets(d, 2)
     one_interaction_set = [[cpn] for cpn in range(d)]
-    comp = {'gt':{}, 'recons':{}}
+    comp = {'gt': {}, 'recons': {}}
     coup1 = {}
     coup2 = {}
-    coup1_max = {'gt':{}, 'recons':{}, 'grad':{}, 'labels':one_interaction_set}
-    coup2_max = {'gt':{}, 'recons':{}, 'hessian':{}, 'labels':two_interaction_set}
+    coup1_max = {'gt': {}, 'recons': {}, 'grad': {}, 'labels': one_interaction_set}
+    coup2_max = {'gt': {}, 'recons': {}, 'hessian': {}, 'labels': two_interaction_set}
 
     coup1_max['grad'] = {}
     coup2_max['hessian'] = {}
@@ -145,7 +145,7 @@ def get_vanishing_indices(ground_truth, grad, hess, U, max_inter=None, clamp=1e-
 
     if len(first_order_indices) != 0:
         for cp in one_interaction_set:#first_order_indices:
-            coup1[str(cp)] = {'gt':{}, 'recons':{}, 'grad': [grad_norm.abs().max(dim=1)[0][cp[0]],
+            coup1[str(cp)] = {'gt': {}, 'recons': {}, 'grad': [grad_norm.abs().max(dim=1)[0][cp[0]],
                                                             grad_norm.abs().mean(dim=1)[cp[0]]]}
             coup1_max['grad']['inf-norm'].append(grad_norm.abs().max(dim=1)[0][cp[0]])
             coup1_max['grad']['1-norm'].append(grad_norm.abs().mean(dim=1)[cp[0]])
@@ -174,7 +174,6 @@ def get_vanishing_indices(ground_truth, grad, hess, U, max_inter=None, clamp=1e-
             coup2_max['recons']['1-norm'].append(max([max(coup2[str(cp)]['recons'][j]['1-norm']) for j in range(2, max_inter)]))
     print("Second order couplings: ", coup2_max)
     return {'1': coup1_max, '2': coup2_max}
-
 
 
 if __name__ == '__main__':

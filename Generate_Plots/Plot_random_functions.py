@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from os.path import dirname, abspath
 from Utils.Function_utils import compute_hessian_orig_2d
-from Anova_AE.Evaluate_Test_Cases.Evaluation_functions import get_total_Rot
+from Utils.Evaluation_utils import get_total_Rot
 import torch
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')

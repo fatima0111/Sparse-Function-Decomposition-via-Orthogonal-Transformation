@@ -3,8 +3,8 @@ import numpy as np
 
 def func1():
     '''
-    f(x_1, ..., x_7) = sin(2x_1)*x_7^3 + exp(
-        -(x_1-1)^2)*(x_4+3) + cos(2*x_2)*sin(3*x_5) + x_6^2
+    f(x_1, ..., x_7) = 7sin(2x_1)x_7^3 + 5exp(
+        -(x_1-1)^2)(x_4+1) + 10cos(2x_2)sin(x_5+3)
     :return: f(x_1, ..., x_7)
     '''
 
@@ -21,11 +21,11 @@ def func1():
     R = torch.as_tensor(np.linalg.svd(np.random.rand(d, d))[0], dtype=torch.float64)
     ground_truth = {}
     ground_truth['d'] = d
-    ground_truth['max_block_size'] = max_block_size
     ground_truth['K'] = len(t_num_sub_function_entries)
-    ground_truth['blocs'] = blocks
     ground_truth['J'] = J
-    ground_truth['num_samples'] = int(1e2)
+    ground_truth['N'] = int(1e2)
+    ground_truth['max_block_size'] = max_block_size
+    ground_truth['blocs'] = blocks
     ground_truth['t_sub_function_indices'] = [u for u in t_sub_function_indices]
     ground_truth['t_num_sub_function_entries'] = t_num_sub_function_entries
     ground_truth['parameters'] = parameters
@@ -35,8 +35,9 @@ def func1():
 
 def func2():
     '''
-        f(x_1, ..., x_7) = sin(2x_1)*x_7^3 + exp(
-            -(x_1-1)^2)*(x_4+3) + cos(2*x_2)*sin(3*x_5) + x_6^2
+        f(x_1, ..., x_7) = 10x_1x_7^3 +  5exp(-(x_1-1)^2)cos(3x_4)
+        + 8sin(x_2)cos(x_7) +12cos(2x_3)sin(3x_5)
+        + 6x_5x_6
         :return: f(x_1, ..., x_7)
     '''
     d = 7
@@ -52,11 +53,11 @@ def func2():
     R = torch.as_tensor(np.linalg.svd(np.random.rand(d, d))[0], dtype=torch.float64)
     ground_truth = {}
     ground_truth['d'] = d
-    ground_truth['max_block_size'] = max_block_size
     ground_truth['K'] = len(t_num_sub_function_entries)
-    ground_truth['blocs'] = blocks
     ground_truth['J'] = J
-    ground_truth['num_samples'] = int(1e2)
+    ground_truth['N'] = int(1e2)
+    ground_truth['max_block_size'] = max_block_size
+    ground_truth['blocs'] = blocks
     ground_truth['t_sub_function_indices'] = [u for u in t_sub_function_indices]
     ground_truth['t_num_sub_function_entries'] = t_num_sub_function_entries
     ground_truth['parameters'] = parameters

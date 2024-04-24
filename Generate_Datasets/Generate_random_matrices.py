@@ -27,9 +27,7 @@ if __name__ == '__main__':
     output_folder = dirname(dirname(abspath(__file__)))+'/Dataset'
     for j in range(N_run):
         N_train = 100 * d
-        #print(int(d * (d - 1) / 2))
         s = np.random.randint(1, int(d * (d - 1) / 2 + 1))
-        #print('s= ', s)
         J = generate_cop(d=d, s=s)
         out = ran_p(J, d=d, N=N_train)
         hessian, R = torch.tensor(out[0]), torch.tensor(out[1])
