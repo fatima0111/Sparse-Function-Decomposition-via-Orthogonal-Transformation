@@ -98,7 +98,7 @@ for names_d in names.keys():
                     if zero_norm_H_man_opt_la-zero_norm_gt > 0:
                         non_zero_man_opt_la.append([j, zero_norm_H_man_opt_la-zero_norm_gt])
                         if zero_norm_H_man_opt_la-zero_norm_gt < 3:
-                            man_opt_count['gt']['la'][zero_norm_H_man_opt_la-zero_norm_gt] +=1
+                            man_opt_count['gt']['la'][zero_norm_H_man_opt_la-zero_norm_gt] += 1
                         elif zero_norm_H_man_opt_la-zero_norm_gt >= 3:
                             man_opt_count['gt']['la'][3] += 1
                     H_man_opt_re[H_man_opt_re != torch.clamp(H_man_opt_re, clamp)] = 0

@@ -21,24 +21,21 @@ if torch.cuda.is_available():
 else:
     device = torch.device('cpu')
 
-def generate_components(input_data, J, blocks, max_subfunction_entries=2, probs=None):
+def generate_components(J, blocks, probs=None):
     '''
     Constructs the function examples from section 5.2
     :param K: Number of edges (also number of sumands)
-    :param d: Number of vertices (also input space dimension)
-    :param max_block_size: size of maximal clique in the graph
-    :return: The function parameters
+    :param blocks: Connected components on the graph
+    :return: dictionary with information about the function
     '''
-    d = input_data.shape[1]
-    assert max_subfunction_entries <= d
     t_sub_function_indices = []
     parameters = []
     K = len(J)
     for k in range(K):
         sub_function_indices = np.random.choice(range(len(possible_sub_functions)),
-                                size=2, p=probs)
+                                size=2)
         var1 = np.random.choice([5, int(sub_function_indices[0])], p=[.55, .45])
-        var2 = np.random.choice([5, int(sub_function_indices[0])], p=[.55, .45])
+        var2 = np.random.choice([5, int(sub_function_indices[1])], p=[.55, .45])
         sub_function_indices[0] = var1
         sub_function_indices[1] = var2
 
@@ -70,7 +67,7 @@ if __name__ == '__main__':
         }
     tmp = {'clean': copy.deepcopy(tmp1), 'noisy': copy.deepcopy(tmp1)}
     Output = {}
-    N_run = 50
+    N_run = 30
     output_folder = dirname(dirname(abspath(__file__)))+'/Dataset'
     for j in range(N_run):
         Output[j] = {}

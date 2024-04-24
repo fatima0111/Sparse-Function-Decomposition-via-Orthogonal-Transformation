@@ -4,14 +4,8 @@ import copy
 from Utils.Generation_utils import ran_p, generate_cop, get_rank_svd
 from Utils.Evaluation_utils import NumpyEncoder
 import json
-import sys
 from os.path import dirname, abspath
-if '/homes/math/ba/trafo_nova/' not in sys.path:
-    sys.path.append('/homes/math/ba/trafo_nova/')
-if '/homes/numerik/fatimaba/store/Github/trafo_nova/' not in sys.path:
-    sys.path.append('/homes/numerik/fatimaba/store/Github/trafo_nova/')
-if '//' not in sys.path:
-    sys.path.append('//')
+
 
 if __name__ == '__main__':
     tmp1 = {
@@ -26,16 +20,16 @@ if __name__ == '__main__':
             }
         }
     tmp = {'clean': copy.deepcopy(tmp1), 'noisy': copy.deepcopy(tmp1)}
-    Output = {}
+    Data = {}
     d = 5
     N_run = 100
     symmetric_noise = False
-    output_folder = dirname(abspath(__file__))+'/Test_Cases_Man_Opt_GS'
+    output_folder = dirname(dirname(abspath(__file__)))+'/Dataset'
     for j in range(N_run):
         N_train = 100 * d
-        print(int(d * (d - 1) / 2))
+        #print(int(d * (d - 1) / 2))
         s = np.random.randint(1, int(d * (d - 1) / 2 + 1))
-        print('s= ', s)
+        #print('s= ', s)
         J = generate_cop(d=d, s=s)
         out = ran_p(J, d=d, N=N_train)
         hessian, R = torch.tensor(out[0]), torch.tensor(out[1])
@@ -48,22 +42,19 @@ if __name__ == '__main__':
         u2, d2, v2h = torch.svd(vec_hessian_noise)
         rank = get_rank_svd(d1, u1.shape[0])
         rank_noise = get_rank_svd(d2, u1.shape[0])
-        print('\nranK: ', rank)
+        #print('\nranK: ', rank)
         hessian_rank = u1.T[:rank].reshape(rank, d, d)
         hessian_rank_noise = u2.T[:rank_noise].reshape(rank_noise, d, d)
-        Output[j] = {}
-        Output[j]['dim'] = d
-        Output[j]['J'] = J
-        Output[j]['R'] = R
-        Output[j]['rank'] = rank
-        Output[j]['rank_noisy'] = rank_noise
-        Output[j]['svd_basis'] = {'clean': hessian_rank, 'noisy': hessian_rank_noise}
-        #Output[j]['svd_basis_noisy'] =
-        Output[j]['hessian'] = {'clean': hessian, 'noisy': hessian_noisy}
-        #Output[j]['hessian_noisy'] =
-        Output[j]['time'] = copy.deepcopy(tmp)
-        Output[j]['loss'] = copy.deepcopy(tmp)
-        Output[j]['hessian_U'] = copy.deepcopy(tmp)
-        Output[j]['U'] = copy.deepcopy(tmp)
+        Data[j] = {}
+        Data[j]['dim'] = d
+        Data[j]['J'] = J
+        Data[j]['R'] = R
+        Data[j]['rank'] = {'clean': rank, 'noisy': rank_noise}
+        Data[j]['svd_basis'] = {'clean': hessian_rank, 'noisy': hessian_rank_noise}
+        Data[j]['hessian'] = {'clean': hessian, 'noisy': hessian_noisy}
+        Data[j]['time'] = copy.deepcopy(tmp)
+        Data[j]['loss'] = copy.deepcopy(tmp)
+        Data[j]['hessian_U'] = copy.deepcopy(tmp)
+        Data[j]['U'] = copy.deepcopy(tmp)
     with open('{}/Hessians_dim_{}_N_{}.json'.format(output_folder, d, N_run), 'w') as convert_file:
-        json.dump(Output, convert_file, cls=NumpyEncoder)
+        json.dump(Data, convert_file, cls=NumpyEncoder)

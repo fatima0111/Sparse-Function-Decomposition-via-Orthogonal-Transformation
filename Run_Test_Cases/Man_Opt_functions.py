@@ -110,8 +110,7 @@ if __name__ == '__main__':
             eps1 = 3 if (NN_train or cov is not None) else 3
             eps2 = 2 if (NN_train or cov is not None) else 3
             y_test = compute_function(x_test, ground_truth)
-            gradF_orig = compute_gradient_orig_2d(
-                x_test, ground_truth)
+            gradF_orig = compute_gradient_orig_2d(x_test, ground_truth)
             gradient = gradF_orig
             hessianF_orig = compute_hessian_orig_2d(x_test.clone(), ground_truth)
             if cov is not None:
