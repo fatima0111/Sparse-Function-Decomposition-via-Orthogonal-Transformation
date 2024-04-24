@@ -2,6 +2,7 @@ import json
 import copy
 import torch
 from Utils.Evaluation_utils import get_total_Rot, Init_Method
+from os.path import dirname, abspath
 
 def plot_histogram(data,j=str(0), clamp=1e-4, cov=None):
     import matplotlib.pyplot as plt
@@ -59,7 +60,7 @@ def plot_histogram(data,j=str(0), clamp=1e-4, cov=None):
     plt.show()
 
 if __name__ == '__main__':
-    output_folder = '/homes/numerik/fatimaba/store/Github/trafo_nova/Anova_AE/Output_files'
+    output_folder = dirname(dirname(abspath(__file__))) + '/Output_algoritms/ANOVA_sparse_functions'
     covs = [None, 0.5]
     init_method = Init_Method.GS
     h_sizes = [1]
@@ -74,13 +75,10 @@ if __name__ == '__main__':
             with open(name) as convert_file:
                 datas = copy.deepcopy(json.load(convert_file))
                 for j in datas.keys():
-                    dim = datas[str(j)]['dim']
                     Rot_la, Rot_re = get_total_Rot(datas, str(j), init_method=init_method)
                     x_test = torch.as_tensor(datas[str(j)]['x_test'])
                     ground_truth = datas[str(j)]['groundtruth']
                     ground_truth['R'] = torch.as_tensor(ground_truth['R'])
-                    #U_v = torch.as_tensor(datas[str(j)]['U_v'])
-                    #Rot = Rot_re.T
                     suff_ = '_cov_{}'.format(cov) if cov is not None else ''
                     fname = ''
                     if init_method == Init_Method.GS:

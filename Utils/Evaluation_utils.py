@@ -82,7 +82,8 @@ def get_total_Rot(data, j, init_method=Init_Method.RI):
     return U_La_ @ P @ U1.T, U_Rgd_ @ P @ U1.T
 
 
-def compute_hessian_rotmatrix(data, method, noise_data=False, noisy_rot=False, basis_hess=False, p=1):
+def compute_hessian_rotmatrix(data, method, noise_data=False, noisy_rot=False,
+                              basis_hess=False, p=1):
     '''
     :param data:
     :param method:

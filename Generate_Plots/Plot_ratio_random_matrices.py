@@ -4,13 +4,15 @@ import torch
 import numpy as np
 from matplotlib import pyplot as plt
 from os.path import dirname, abspath
-from Anova_AE.Libs.Evaluation_utils import compute_hessian_rotmatrix
-from Anova_AE.Libs.Grid_Search import Method
-etas = [1e-8, 1e-7, 1e-8, 1e-9,  1e-10, 1e-11]# 1e-13, 1e-15, 1e-16
+from Utils.Evaluation_utils import compute_hessian_rotmatrix
+from Libs.Grid_Search import Method
+
+etas = [1e-8, 1e-7, 1e-8, 1e-9,  1e-10, 1e-11]
 etas_noise = [1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6]
 clamp_gt = 1e-6
-out_dir = "/store/steinitz/datastore/fatimaba/Github/trafo_nova/Anova_AE/Out_comp/all"
-report_dir = "/store/steinitz/datastore/fatimaba/Github/trafo_nova/Anova_AE/Test_Cases_Plots"
+
+out_dir = dirname(dirname(abspath(__file__)))+'/Output_algoritms/Random_matrices'
+report_dir = dirname(dirname(abspath(__file__))) + '/Plots/Random_matrices'
 names = [
         'Compare_Man_opt_grid_search_100_dim_2.json',
         'Compare_Man_opt_grid_search_100_h_1.0_bh_3.14_dim_2.json',
@@ -245,6 +247,6 @@ axs[1, 3].set_position(box)
 lines_labels = [axs[0, 0].get_legend_handles_labels()]
 lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
 fig.legend(lines, labels, ncol=6, bbox_to_anchor=(.9, 1.), borderpad=0.1)
-root = dirname(dirname(abspath(__file__))) + '/Plots/Random_matrices'
-plt.savefig(root + '/Truncation.png')
+
+plt.savefig(report_dir + '/Truncation.png')
 plt.show()

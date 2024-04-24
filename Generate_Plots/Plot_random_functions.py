@@ -1,17 +1,16 @@
-import copy
 import json
-import torch
 import numpy as np
 from matplotlib import pyplot as plt
-from os.path import dirname, abspath
 from Utils.Function_utils import compute_hessian_orig_2d
-from Utils.Evaluation_utils import get_total_Rot
+from Utils.Evaluation_utils import get_total_Rot, Init_Method
 import torch
+from os.path import dirname, abspath
+
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-out_dir = "/store/steinitz/datastore/fatimaba/Github/trafo_nova/Anova_AE/Output_ManOpt/Comparing_Man_Opt_GS"
-report_dir = "/store/steinitz/datastore/fatimaba/Github/trafo_nova/Anova_AE/Test_Cases_Plots"
+out_dir = dirname(dirname(abspath(__file__)))+'/Output_algoritms/Random_functions'
+report_dir = dirname(dirname(abspath(__file__))) + '/Plots/Random_functions'
 
 names_clean = [
     'function_Man_opt_grid_search_h_1.0_N_50.json',
@@ -38,7 +37,7 @@ loss_mean = 0
 losses_inner = []
 h_sizes = [1, 0.5, 0.25, 0.125]
 labels = ['h={}'.format(i) for i in h_sizes]
-def plot_loss_ration(etas, names, noisy_data=False):
+def plot_loss_ratio(etas, names, noisy_data=False):
     fig, axs = plt.subplots(nrows=2, ncols=2)
     man_opt_clamp = torch.zeros(2, len(etas))
     man_opt_gs_clamp = {}
@@ -64,7 +63,7 @@ def plot_loss_ration(etas, names, noisy_data=False):
             for ind_clamp, clamp in enumerate(etas):
                 x_0 = 0
                 for j in data.keys():
-                    if len(data[j]['SBD_GT'])>1:
+                    if len(data[j]['SBD_GT']) > 1:
                         x_test = data[j]['x_test'] = torch.as_tensor(data[j]['x_test'], dtype=torch.float64)
                         supp = int(data[j]['support'])
                         dim = (data[j]['dim'])
@@ -73,12 +72,8 @@ def plot_loss_ration(etas, names, noisy_data=False):
                         ground_truth['v'] = torch.as_tensor(ground_truth['v'], dtype=torch.float64)
                         v = ground_truth['v']
                         rank = int(data[j]['rank_hessian'])
-                        hessianF_orig = compute_hessian_orig_2d(
-                            x_test.clone(), ground_truth)
-                        hessian_f, _ = compute_hessian_orig_2d(
-                            x_test.clone(), ground_truth, return_coupling=True)
-                        uk, dk, vk = torch.svd(hessian_f.flatten(start_dim=1).T)
-                        f_basis = uk.T[:rank].reshape(rank, dim, dim)
+                        hessianF_orig = compute_hessian_orig_2d(x_test.clone(), ground_truth)
+                        hessian_f, _ = compute_hessian_orig_2d(x_test.clone(), ground_truth, return_coupling=True)
                         if ind_clamp == len(etas)-1:
                             u_grad = torch.as_tensor(data[j]['grad_U'], dtype=torch.float64)
                             u2, d2, v2 = torch.svd((u_grad.T @ hessianF_orig @ u_grad).flatten(start_dim=1).T)
@@ -93,11 +88,10 @@ def plot_loss_ration(etas, names, noisy_data=False):
                             P = torch.as_tensor(data[j]['P'], dtype=torch.float64)
                             hessian_rank_blocks = P @ hessian_rank @ P.T
 
-
                         H_gt = ((v @ hessianF_orig @ v.T).abs()).mean(dim=0)
                         H_gt[H_gt != torch.clamp(H_gt, 1e-5)] = 0
                         zero_norm_ht = len(H_gt.nonzero())
-                        Rot_la, Rot_re = get_total_Rot(data, j)
+                        Rot_la, Rot_re = get_total_Rot(data, j, Init_Method.GS)
                         H_la = ((Rot_la@hessianF_orig@Rot_la.T).abs()).mean(dim=0)
                         H_la[H_la != torch.clamp(H_la, clamp)] = 0
                         zero_norm_H_la = len(H_la.nonzero())
@@ -110,7 +104,7 @@ def plot_loss_ration(etas, names, noisy_data=False):
                         if zero_norm_H_re - zero_norm_ht > 0:
                             man_opt_gs_clamp[h_size]['gt']['re'][ind_clamp] += 1
                         if h_size == 1 / 2:
-                            Rot_mo_la, Rot_mo_re = get_total_Rot(data, j, man_opt=True)
+                            Rot_mo_la, Rot_mo_re = get_total_Rot(data, j)
                             H_mo_la = ((Rot_mo_la @ hessianF_orig @ Rot_mo_la.T).abs()).mean(dim=0)
                             H_mo_la[H_mo_la != torch.clamp(H_mo_la, clamp)] = 0
                             zero_norm_H_mo_la = len(H_mo_la.nonzero())
@@ -207,26 +201,24 @@ def plot_loss_ration(etas, names, noisy_data=False):
 
             re_colors = ['#9f86fd', '#01796f', '#e4181b', '#00cccc', '#f47bfe']
             h_ind = h_sizes.index(h_size)
-            x_tiksz = torch.tensor([i for i in range(0, 1001, 50)] + [i for i in range(2000, 50001, 1000)]).cpu()
+            x_tikz = torch.tensor([i for i in range(0, 1001, 50)] + [i for i in range(2000, 50001, 1000)]).cpu()
             h = h_sizes[h_ind]
             if h_size == 1 / 2:
                 if ind_clamp == len(etas) - 1:
-                    axs[1, 0].plot(x_tiksz, c_loss_median_man_opt[0, :].cpu(),
+                    axs[1, 0].plot(x_tikz, c_loss_median_man_opt[0, :].cpu(),
                                    linestyle='dashed', color='#1B2ACC', label='$RI_{La}$')
-                    axs[0, 0].plot(x_tiksz, c_loss_median_man_opt[1, :].cpu(),
+                    axs[0, 0].plot(x_tikz, c_loss_median_man_opt[1, :].cpu(),
                                    color='#1B2ACC', label='$RI_{Rgd}$')
                 axs[1, 1].plot(np.array(etas), man_opt_clamp[0, :].cpu() / len(list(data.keys())), linestyle='dashed', color='#1B2ACC', label='$RI_{La}$')
                 axs[0, 1].plot(np.array(etas), man_opt_clamp[1, :].cpu() / len(list(data.keys())), color='#1B2ACC', label='$RI_{Rgd}$')
                 print(man_opt_clamp[1, :].cpu() / len(list(data.keys())))
             if ind_clamp == len(etas) - 1:
-                axs[1, 0].plot(x_tiksz, c_loss_median_man_opt_gs[0, :].cpu(), linestyle='dashed', color=re_colors[h_ind], label='$h_{La} = %.3f$' % h)
-                axs[0, 0].plot(x_tiksz, c_loss_median_man_opt_gs[1, :].cpu(), color=re_colors[h_ind], label='$h_{Rgd} = %.3f$' % h)
+                axs[1, 0].plot(x_tikz, c_loss_median_man_opt_gs[0, :].cpu(), linestyle='dashed', color=re_colors[h_ind], label='$h_{La} = %.3f$' % h)
+                axs[0, 0].plot(x_tikz, c_loss_median_man_opt_gs[1, :].cpu(), color=re_colors[h_ind], label='$h_{Rgd} = %.3f$' % h)
                 print(man_opt_gs_clamp[h_size]['gt']['re'].cpu()/len(list(data.keys())))
-
             axs[0, 1].plot(np.array(etas), man_opt_gs_clamp[h_size]['gt']['re'].cpu() / len(list(data.keys())),
                            color=re_colors[h_ind], label='$h_{Rgd} = %.3f$' % h)
             axs[1, 1].plot(np.array(etas), man_opt_gs_clamp[h_size]['gt']['la'].cpu() / len(list(data.keys())), linestyle='dashed', color=re_colors[h_ind], label='$h_{La} = %.3f$'%h)
-
 
             axs[0, 0].grid(color='k', linestyle='--', linewidth=0.5)
             axs[0, 1].grid(color='k', linestyle='--', linewidth=0.5)
@@ -244,8 +236,6 @@ def plot_loss_ration(etas, names, noisy_data=False):
             axs[1, 1].set_xlabel('$\eta$')
     Re_label = axs[0, 0].get_legend_handles_labels()
     La_label = axs[1, 0].get_legend_handles_labels()
-    print(Re_label)
-    print(La_label)
     lines = []
     labels = []
     for i in range(len(Re_label[0])):
@@ -257,11 +247,10 @@ def plot_loss_ration(etas, names, noisy_data=False):
     lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
     print(lines, labels)
     fig.legend(lines, labels, ncol=5, bbox_to_anchor=(.91, 1.), borderpad=0.1)
-    root = dirname(dirname(abspath(__file__))) + '/Plots/Random_functions'
     noisy_suff = '_noise' if noisy_data else ''
-    plt.savefig(root + '/Losses_function{}.png'.format(noisy_suff))
+    plt.savefig(report_dir + '/Losses_function{}.png'.format(noisy_suff))
 
 if __name__ == '__main__':
-    plot_loss_ration(etas_clean, names_clean)
-    plot_loss_ration(etas_noisy, names_noisy, noisy_data=True)
+    plot_loss_ratio(etas_clean, names_clean)
+    plot_loss_ratio(etas_noisy, names_noisy, noisy_data=True)
     plt.show()

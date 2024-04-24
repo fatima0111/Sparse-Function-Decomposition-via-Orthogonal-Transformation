@@ -69,7 +69,7 @@ def get_vanishing_indices(ground_truth, grad, hess, U, max_inter=None, clamp=1e-
     :param clamp:
     :return:
     '''
-    d = ground_truth['n']
+    d = ground_truth['d']
     if max_inter is None:
         max_inter = d
     grad_norm = U.T @ grad
@@ -102,7 +102,6 @@ def get_vanishing_indices(ground_truth, grad, hess, U, max_inter=None, clamp=1e-
     coup2 = {}
     coup1_max = {'gt': {}, 'recons': {}, 'grad': {}, 'labels': one_interaction_set}
     coup2_max = {'gt': {}, 'recons': {}, 'hessian': {}, 'labels': two_interaction_set}
-
     coup1_max['grad'] = {}
     coup2_max['hessian'] = {}
     coup1_max['grad']['inf-norm'] = []
@@ -110,7 +109,6 @@ def get_vanishing_indices(ground_truth, grad, hess, U, max_inter=None, clamp=1e-
     coup2_max['hessian'] = {}
     coup2_max['hessian']['inf-norm'] = []
     coup2_max['hessian']['1-norm'] = []
-
     coup1_max['gt']['inf-norm'] = {}
     coup1_max['gt']['1-norm'] = {}
     coup1_max['recons']['inf-norm'] = {}
@@ -123,30 +121,27 @@ def get_vanishing_indices(ground_truth, grad, hess, U, max_inter=None, clamp=1e-
     coup1_max['gt']['1-norm'] = []
     coup1_max['recons']['inf-norm'] = []
     coup1_max['recons']['1-norm'] = []
-
     coup2_max['gt']['inf-norm'] = []
     coup2_max['gt']['1-norm'] = []
     coup2_max['recons']['inf-norm'] = []
     coup2_max['recons']['1-norm'] = []
-
     axis = [torch.as_tensor(np.linspace(-1, 1, 12)).to(torch.device('cpu')) for j in range(d)]
     all = torch.meshgrid(*[axis[0] for j in range(d)])
     points = [all[j].flatten().to(torch.float32) for j in range(d)]
     points = torch.stack(points, dim=1).T
-    A = torch.as_tensor(ground_truth['v'], dtype=torch.float32)
+    R = torch.as_tensor(ground_truth['R'], dtype=torch.float32)
     points_ = U @ points
-    f_gt = compute_function((A.T @ points).T, ground_truth).to(torch.device('cpu')).reshape(all[0].shape)
+    f_gt = compute_function((R.T @ points).T, ground_truth).to(torch.device('cpu')).reshape(all[0].shape)
     f_recons = compute_function(points_.T, ground_truth).to(torch.device('cpu')).reshape(all[0].shape)
 
     t_gt = tn.Tensor(f_gt)
     t_recons = tn.Tensor(f_recons)
     anova_gt = tn.anova_decomposition(t_gt)
     anova_recons = tn.anova_decomposition(t_recons)
-
     if len(first_order_indices) != 0:
         for cp in one_interaction_set:#first_order_indices:
             coup1[str(cp)] = {'gt': {}, 'recons': {}, 'grad': [grad_norm.abs().max(dim=1)[0][cp[0]],
-                                                            grad_norm.abs().mean(dim=1)[cp[0]]]}
+                                                                grad_norm.abs().mean(dim=1)[cp[0]]]}
             coup1_max['grad']['inf-norm'].append(grad_norm.abs().max(dim=1)[0][cp[0]])
             coup1_max['grad']['1-norm'].append(grad_norm.abs().mean(dim=1)[cp[0]])
 
@@ -192,14 +187,14 @@ if __name__ == '__main__':
             with open(name) as convert_file:
                 datas = copy.deepcopy(json.load(convert_file))
                 for j in datas.keys():
-                    dim = datas[str(j)]['dim']
+                    ground_truth = datas[str(j)]['groundtruth']
+                    #d = ground_truth['d']
                     U_la, U_rgd = get_total_Rot(datas, str(j), init_method=init_method)
                     hessian_supp = torch.as_tensor(datas['0']['svd_basis'])
                     supp = hessian_supp.shape[1]
                     N = hessian_supp.shape[0]
                     x_test = torch.as_tensor(datas[str(j)]['x_test'])
-                    ground_truth = datas[str(j)]['groundtruth']
-                    ground_truth['v'] = torch.as_tensor(ground_truth['v'])
+                    ground_truth['R'] = torch.as_tensor(ground_truth['R'])
                     U = U_rgd.T
                     gradient = compute_gradient_autograd(x_test, ground_truth)
                     hessian = compute_hessian_autograd(x_test, ground_truth)

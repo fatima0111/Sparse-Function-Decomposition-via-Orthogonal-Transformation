@@ -286,18 +286,18 @@ def run_grid_search(datas, h=1/2, batch_h=math.pi/2, convert_to_list=True):
         j = int(j)
         result_grid_search = [grid.min_rotations[j], grid.min_losses[j]]
         result_grid_search_noise = [grid.min_rotations_noisy[j], grid.min_losses_noisy[j]]
-        hessian = torch.as_tensor(data['hessian'], dtype=torch.float64)
-        hessian_noise = torch.as_tensor(data['hessian_noise'], dtype=torch.float64)
-        data['M']['gt']['Grid_search'] = (result_grid_search[0] @ hessian @ result_grid_search[0].T).abs().mean(
-            dim=0)
-        data['M']['noise']['Grid_search'] = (
-                result_grid_search_noise[0] @ hessian_noise @ result_grid_search_noise[0].T).abs().mean(dim=0)
-        data['R']['gt']['Grid_search'] = result_grid_search[0]
-        data['R']['noise']['Grid_search'] = result_grid_search_noise[0]
-        data['loss']['gt']['Grid_search'] = result_grid_search[1]
-        data['loss']['noise']['Grid_search'] = result_grid_search_noise[1]
-        data['time']['gt']['Grid_search'] = [grid.t_rot, grid.t_losses[j]]
-        data['time']['noise']['Grid_search'] = [grid.t_rot, grid.t_noisy_losses[j]]
+        #hessian = torch.as_tensor(data['hessian'], dtype=torch.float64)
+        #hessian_noise = torch.as_tensor(data['hessian_noise'], dtype=torch.float64)
+        #data['M']['gt']['Grid_search'] = (result_grid_search[0] @ hessian @ result_grid_search[0].T).abs().mean(
+        #    dim=0)
+        #data['M']['noise']['Grid_search'] = (
+        #        result_grid_search_noise[0] @ hessian_noise @ result_grid_search_noise[0].T).abs().mean(dim=0)
+        data['U']['clean']['Grid_search'] = result_grid_search[0]
+        data['U']['noisy']['Grid_search'] = result_grid_search_noise[0]
+        data['loss']['clean']['Grid_search'] = result_grid_search[1]
+        data['loss']['noisy']['Grid_search'] = result_grid_search_noise[1]
+        data['time']['clean']['Grid_search'] = [grid.t_rot, grid.t_losses[j]]
+        data['time']['noisy']['Grid_search'] = [grid.t_rot, grid.t_noisy_losses[j]]
         data['h_size'] = h
         data['batch_h'] = batch_h
     return datas
@@ -306,32 +306,31 @@ def run_grid_search(datas, h=1/2, batch_h=math.pi/2, convert_to_list=True):
 def run_Man_Opt(data, optimizer_method=Method.Grid_Search, h=1/2, batch_h=math.pi / 2,
                 N_epochs=int(1e4), print_mode=False, noisy_data=False, opt_method='both', learning_rate=5e-4):
     '''
-    :param hessian:
-    :param v:
+    :param data:
     :param optimizer_method:
-    :param h:
+    :param h: step_size
     :param batch_h:
-    :param N_epochs:
+    :param N_epochs: number of iterations
     :return:
     '''
-    hessian = torch.as_tensor(data['svd_basis'],
+    hessian = torch.as_tensor(data['svd_basis']['clean'],
                               dtype=torch.float64
                               ) if not noisy_data else torch.as_tensor(
-        data['svd_basis_noisis'], dtype=torch.float64)
+        data['svd_basis']['noisy'], dtype=torch.float64)
     if optimizer_method == Method.Manifold_Opt:
         out = stiefel_manifold_opt(hessian, n_epochs_=N_epochs, print_mode=print_mode,
                                    opt_method=opt_method, learning_rate=learning_rate)
         return out
     else:
-        if data['R']['gt']['Grid_search'] == {}:
+        if data['U']['clean']['Grid_search'] == {}:
             t1 = time.time()
             run_grid_search([data], h, batch_h, convert_to_list=False)
             t2 = time.time()
             print('\n time: Grid Search : ', t2 - t1)
-        min_rot = torch.as_tensor(data['R']['gt']['Grid_search'],
+        min_rot = torch.as_tensor(data['U']['clean']['Grid_search'],
                                   dtype=torch.float64
                                   ) if not noisy_data else torch.as_tensor(
-                                data['R']['noise']['Grid_search'],
+                                data['U']['noisy']['Grid_search'],
                                   dtype=torch.float64)
         if optimizer_method == Method.Manifold_Opt_GS:
             out = stiefel_manifold_opt(hessian, init_rot=min_rot, n_epochs_=N_epochs,
@@ -348,13 +347,12 @@ def run_Man_Opt(data, optimizer_method=Method.Grid_Search, h=1/2, batch_h=math.p
             return data
 
 
-def run_MO_Block(hessian, optimizer_method=Method.Grid_Search,h=1/2, batch_h=math.pi / 2,
+def run_MO_Block(hessian, optimizer_method=Method.Grid_Search, h=1/2, batch_h=math.pi / 2,
                 N_epochs=int(1e4), print_mode=False, opt_method='both', learning_rate=5e-4):
     '''
     :param hessian:
-    :param v:
     :param optimizer_method:
-    :param h:
+    :param h: step_size
     :param batch_h:
     :param N_epochs:
     :return:

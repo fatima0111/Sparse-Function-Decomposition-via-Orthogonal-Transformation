@@ -10,7 +10,7 @@ from os.path import dirname, abspath
 if __name__ == '__main__':
     tmp1 = {
             'Grid_search': {},
-            'Man_Opt': {
+            'Man_Opt_RI': {
                 'la': {},
                 'rgd': {}
             },

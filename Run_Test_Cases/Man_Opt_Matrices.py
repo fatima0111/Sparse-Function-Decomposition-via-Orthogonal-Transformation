@@ -62,8 +62,8 @@ run_man_opt = args.run_man_opt
 print_mode = args.print_mode
 opt_method = args.opt_method
 learning_rate = args.learning_rate
-in_dir_mo = dirname(dirname(abspath(__file__)))+'/Test_Cases_Man_Opt_GS'
-in_dir = args.output_folder + '/Grid_Search_Output'
+in_dir_mo = dirname(dirname(abspath(__file__))) + '/Dataset'
+in_dir = args.output_folder + '/Output_algorithms/Grid_search'
 batches = {
     2: {1: math.pi,
         1 / 2: math.pi,
@@ -80,9 +80,7 @@ batches = {
         1 / 4: math.pi/2,
         1 / 8: math.pi/2,
         1/10: 1.0},
-    5: {1: 2.36,
-        1 / 2: 1.5,
-        1 / 4: 0.75}
+    5: {1: 2.36}
 }
 batch_h = batches[dim][h_size]
 if run_man_opt:
@@ -97,82 +95,82 @@ else:
 for j in range(start_N_run, N_run):
     j = str(j)
     data = datas[j]
-    print(data['cop'])
-    print('\nranK: ', data['rank'], 'rank_noise: ', data['rank_noise'])
+    print(data['J'])
+    print('\nranK: ', data['rank']['clean'], 'rank_noisy: ', data['rank']['noisy'])
     data['h_size'] = h_size
     data['batch_h'] = batch_h
-    hessian_rank = torch.as_tensor(data['svd_basis'], dtype=torch.float64)
-    hessian_rank_noise = torch.as_tensor(data['svd_basis_noisis'], dtype=torch.float64)
-    hessian = torch.as_tensor(data['hessian'], dtype=torch.float64)
-    hessian_noise = torch.as_tensor(data['hessian_noise'], dtype=torch.float64)
-    v = torch.as_tensor(data['v'], dtype=torch.float64)
+    hessian_rank = torch.as_tensor(data['svd_basis']['clean'], dtype=torch.float64)
+    hessian_rank_noise = torch.as_tensor(data['svd_basis']['noisy'], dtype=torch.float64)
+    hessian = torch.as_tensor(data['hessian']['clean'], dtype=torch.float64)
+    hessian_noise = torch.as_tensor(data['hessian']['noisy'], dtype=torch.float64)
+    R = torch.as_tensor(data['R'], dtype=torch.float64)
     if run_man_opt:
         result_man_opt = run_Man_Opt(
-            data, v, optimizer_method=Method.Manifold_Opt,
+            data, optimizer_method=Method.Manifold_Opt,
             h=h_size, batch_h=batch_h, N_epochs=N_epochs, print_mode=print_mode)
         Bs_man_opt, losses_man_opt, times_man_opt = result_man_opt
 
         result_man_opt_noise = run_Man_Opt(
-            data, v, optimizer_method=Method.Manifold_Opt,
+            data, optimizer_method=Method.Manifold_Opt,
             h=h_size, batch_h=batch_h, N_epochs=N_epochs, print_mode=print_mode,
             noisy_data=True, opt_method=opt_method, learning_rate=learning_rate)
         Bs_man_opt_noise, losses_man_opt_noise, times_man_opt_noise = result_man_opt_noise
 
-        data['M']['gt']['Man_Opt']['la'] = (Bs_man_opt[0] @ hessian @ Bs_man_opt[0].T).abs().mean(dim=0)
-        data['M']['gt']['Man_Opt']['re'] = (Bs_man_opt[1] @ hessian @ Bs_man_opt[1].T).abs().mean(dim=0)
+        #data['M']['gt']['Man_Opt']['la'] = (Bs_man_opt[0] @ hessian @ Bs_man_opt[0].T).abs().mean(dim=0)
+        #data['M']['gt']['Man_Opt']['re'] = (Bs_man_opt[1] @ hessian @ Bs_man_opt[1].T).abs().mean(dim=0)
 
-        data['M']['noise']['Man_Opt']['la'] = (Bs_man_opt_noise[0] @ hessian_noise @ Bs_man_opt_noise[0].T).abs().mean(
-            dim=0)
-        data['M']['noise']['Man_Opt']['re'] = (Bs_man_opt_noise[1] @ hessian_noise @ Bs_man_opt_noise[1].T).abs().mean(
-            dim=0)
-        data['R']['gt']['Man_Opt']['la'] = Bs_man_opt[0]
-        data['R']['gt']['Man_Opt']['re'] = Bs_man_opt[1]
+        #data['M']['noise']['Man_Opt']['la'] = (Bs_man_opt_noise[0] @ hessian_noise @ Bs_man_opt_noise[0].T).abs().mean(
+        #    dim=0)
+        #data['M']['noise']['Man_Opt']['re'] = (Bs_man_opt_noise[1] @ hessian_noise @ Bs_man_opt_noise[1].T).abs().mean(
+        #    dim=0)
+        data['R']['clean']['Man_Opt_RI']['la'] = Bs_man_opt[0]
+        data['R']['clean']['Man_Opt_RI']['rgd'] = Bs_man_opt[1]
 
-        data['R']['noise']['Man_Opt']['la'] = Bs_man_opt_noise[0]
-        data['R']['noise']['Man_Opt']['re'] = Bs_man_opt_noise[1]
+        data['R']['noise']['Man_Opt_RI']['la'] = Bs_man_opt_noise[0]
+        data['R']['noise']['Man_Opt_RI']['rgd'] = Bs_man_opt_noise[1]
 
-        data['loss']['gt']['Man_Opt']['la'] = losses_man_opt[0]
-        data['loss']['gt']['Man_Opt']['re'] = losses_man_opt[1]
+        data['loss']['clean']['Man_Opt_RI']['la'] = losses_man_opt[0]
+        data['loss']['clean']['Man_Opt_RI']['rgd'] = losses_man_opt[1]
 
-        data['loss']['noise']['Man_Opt']['la'] = losses_man_opt_noise[0]
-        data['loss']['noise']['Man_Opt']['re'] = losses_man_opt_noise[1]
+        data['loss']['noise']['Man_Opt_RI']['la'] = losses_man_opt_noise[0]
+        data['loss']['noise']['Man_Opt_RI']['rgd'] = losses_man_opt_noise[1]
     else:
         print('\n MAN_OPT_GS REIN')
         result_man_opt_gs, result_grid_search = run_Man_Opt(
-            data, v, optimizer_method=Method.Manifold_Opt_GS,
+            data, optimizer_method=Method.Manifold_Opt_GS,
             h=h_size, batch_h=batch_h, N_epochs=N_epochs, print_mode=print_mode,
             opt_method=opt_method, learning_rate=learning_rate)
         Bs_man_opt_gs, losses_man_opt_gs, times_man_opt_gs = result_man_opt_gs
         result_man_opt_gs_noise, result_grid_search_noise = run_Man_Opt(
-            data, v, optimizer_method=Method.Manifold_Opt_GS,
+            data, optimizer_method=Method.Manifold_Opt_GS,
             h=h_size, batch_h=batch_h, N_epochs=N_epochs, print_mode=print_mode, noisy_data=True)
         Bs_man_opt_gs_noise, losses_man_opt_gs_noise, times_man_opt_gs_noise = result_man_opt_gs_noise
 
 
-        #data['M']['gt']['Grid_search'] = (result_grid_search[0]@hessian@result_grid_search[0].T).abs().mean(dim=0)
-        data['M']['gt']['Man_Opt_GS']['la'] = (Bs_man_opt_gs[0]@hessian@Bs_man_opt_gs[0].T).abs().mean(dim=0)
-        data['M']['gt']['Man_Opt_GS']['re'] = (Bs_man_opt_gs[1]@hessian@Bs_man_opt_gs[1].T).abs().mean(dim=0)
+        #data['M']['clean']['Grid_search'] = (result_grid_search[0]@hessian@result_grid_search[0].T).abs().mean(dim=0)
+        #data['M']['clean']['Man_Opt_GS']['la'] = (Bs_man_opt_gs[0]@hessian@Bs_man_opt_gs[0].T).abs().mean(dim=0)
+        #data['M']['clean']['Man_Opt_GS']['re'] = (Bs_man_opt_gs[1]@hessian@Bs_man_opt_gs[1].T).abs().mean(dim=0)
 
         #data['M']['noise']['Grid_search'] = (
         #            result_grid_search_noise[0] @ hessian @ result_grid_search_noise[0].T).abs().mean(dim=0)
-        data['M']['noise']['Man_Opt_GS']['la'] = (Bs_man_opt_gs_noise[0] @ hessian_noise @ Bs_man_opt_gs_noise[0].T).abs().mean(dim=0)
-        data['M']['noise']['Man_Opt_GS']['re'] = (Bs_man_opt_gs_noise[1] @ hessian_noise @ Bs_man_opt_gs_noise[1].T).abs().mean(dim=0)
+        #data['M']['noise']['Man_Opt_GS']['la'] = (Bs_man_opt_gs_noise[0] @ hessian_noise @ Bs_man_opt_gs_noise[0].T).abs().mean(dim=0)
+        #data['M']['noise']['Man_Opt_GS']['re'] = (Bs_man_opt_gs_noise[1] @ hessian_noise @ Bs_man_opt_gs_noise[1].T).abs().mean(dim=0)
 
-        #data['R']['gt']['Grid_search'] = result_grid_search[0]
-        data['R']['gt']['Man_Opt_GS']['la'] = Bs_man_opt_gs[0]
-        data['R']['gt']['Man_Opt_GS']['re'] = Bs_man_opt_gs[1]
+        #data['R']['clean']['Grid_search'] = result_grid_search[0]
+        data['U']['clean']['Man_Opt_GS']['la'] = Bs_man_opt_gs[0]
+        data['U']['clean']['Man_Opt_GS']['rgd'] = Bs_man_opt_gs[1]
 
         #data['R']['noise']['Grid_search'] = result_grid_search_noise[0]
-        data['R']['noise']['Man_Opt_GS']['la'] = Bs_man_opt_gs_noise[0]
-        data['R']['noise']['Man_Opt_GS']['re'] = Bs_man_opt_gs_noise[1]
+        data['U']['noisy']['Man_Opt_GS']['la'] = Bs_man_opt_gs_noise[0]
+        data['U']['noisy']['Man_Opt_GS']['rgd'] = Bs_man_opt_gs_noise[1]
 
-        #data['loss']['gt']['Grid_search'] = result_grid_search[1]
-        data['loss']['gt']['Man_Opt_GS']['la'] = losses_man_opt_gs[0]
-        data['loss']['gt']['Man_Opt_GS']['re'] = losses_man_opt_gs[1]
+        #data['loss']['clean']['Grid_search'] = result_grid_search[1]
+        data['loss']['clean']['Man_Opt_GS']['la'] = losses_man_opt_gs[0]
+        data['loss']['clean']['Man_Opt_GS']['rgd'] = losses_man_opt_gs[1]
 
         #data['loss']['noise']['Grid_search'] = result_grid_search_noise[1]
-        data['loss']['noise']['Man_Opt_GS']['la'] = losses_man_opt_gs_noise[0]
-        data['loss']['noise']['Man_Opt_GS']['re'] = losses_man_opt_gs_noise[1]
+        data['loss']['noisy']['Man_Opt_GS']['la'] = losses_man_opt_gs_noise[0]
+        data['loss']['noisy']['Man_Opt_GS']['rgd'] = losses_man_opt_gs_noise[1]
     if run_man_opt:
         with open('{}/Out_comp/Compare_Man_opt_grid_search_{}_dim_{}.json'.format(
                 args.output_folder, args.suffix_file, dim), 'w') as convert_file:
