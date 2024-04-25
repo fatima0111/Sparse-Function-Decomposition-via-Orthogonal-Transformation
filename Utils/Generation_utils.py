@@ -4,20 +4,6 @@ import copy
 import itertools
 import random
 import math
-def sprod(sym, J, ort, ort_shape):
-    ort = np.reshape(ort, ort_shape)
-    n_sym = sym.shape[0]
-    n_cop = len(J)
-    print(ort.shape)
-    n = max(len(J) * sym.shape[0] + ort.shape[0]**2, ort.shape[0]*ort.shape[1])
-    result = np.zeros(n)
-    for ind in range(n_cop):
-        i, j = J[ind]
-        result[ind*n_sym:(ind+1)*n_sym] = (ort[i].T @ sym @ ort[j]).flatten()
-    ort_cond = ort @ ort.T - np.eye(ort.shape[0])
-    result[len(J)*n_sym:(len(J)*n_sym)+ort.shape[0]**2] = ort_cond.flatten()
-    return result
-
 
 def generate_cop(d=5, s=5):
     '''

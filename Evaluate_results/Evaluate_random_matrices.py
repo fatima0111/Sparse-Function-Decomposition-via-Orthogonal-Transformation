@@ -67,14 +67,22 @@ for names_d in names.keys():
         non_zero_man_opt_re_noise = []
         non_zero_man_opt_gs_re_noise = []
 
-        man_opt_gs_count = {'gt': {'re': {1: 0, 2: 0, 3: 0},
-                                 'la': {1: 0, 2: 0, 3: 0}},
-                            'noise': {'re': {1: 0, 2: 0, 3: 0},
-                                    'la': {1: 0, 2: 0, 3: 0}}}
-        man_opt_count = {'gt': {'re': {1: 0, 2: 0, 3: 0},
-                                 'la': {1: 0, 2: 0, 3: 0}},
-                         'noise': {'re': {1: 0, 2: 0, 3: 0},
-                                    'la': {1: 0, 2: 0, 3: 0}}}
+        man_opt_gs_count = {
+            'clean': {'rgd': {1: 0, 2: 0, 3: 0},
+                      'la': {1: 0, 2: 0, 3: 0}
+                      },
+            'noisy': {'rgd': {1: 0, 2: 0, 3: 0},
+                      'la': {1: 0, 2: 0, 3: 0}
+                      }
+        }
+        man_opt_count = {
+            'clean': {'rgd': {1: 0, 2: 0, 3: 0},
+                      'la': {1: 0, 2: 0, 3: 0}
+                      },
+            'noisy': {'rgd': {1: 0, 2: 0, 3: 0},
+                      'la': {1: 0, 2: 0, 3: 0}
+                      }
+        }
         non_zero_gs = []
         non_zero_gs_noise = []
         sparse = []
@@ -85,7 +93,7 @@ for names_d in names.keys():
             for j in data.keys():
                 #j=str(j)
                 dim = data[j]['dim']
-                R = torch.as_tensor(data[j]['v']) if 'groundtruth' not in data[j].keys() else torch.as_tensor(data[j]['groundtruth']['v'])
+                R = torch.as_tensor(data[j]['R']) if 'groundtruth' not in data[j].keys() else torch.as_tensor(data[j]['groundtruth']['v'])
                 H_gt = (R @ torch.as_tensor(data[j]['svd_basis']) @ R.T).abs().mean(dim=0)
                 H_gt[H_gt != torch.clamp(H_gt, clamp_gt)] = 0
                 zero_norm_gt = len(H_gt.nonzero())
@@ -98,17 +106,17 @@ for names_d in names.keys():
                     if zero_norm_H_man_opt_la-zero_norm_gt > 0:
                         non_zero_man_opt_la.append([j, zero_norm_H_man_opt_la-zero_norm_gt])
                         if zero_norm_H_man_opt_la-zero_norm_gt < 3:
-                            man_opt_count['gt']['la'][zero_norm_H_man_opt_la-zero_norm_gt] += 1
+                            man_opt_count['clean']['la'][zero_norm_H_man_opt_la-zero_norm_gt] += 1
                         elif zero_norm_H_man_opt_la-zero_norm_gt >= 3:
-                            man_opt_count['gt']['la'][3] += 1
+                            man_opt_count['clean']['la'][3] += 1
                     H_man_opt_re[H_man_opt_re != torch.clamp(H_man_opt_re, clamp)] = 0
                     zero_norm_H_man_opt_re = len(H_man_opt_re.nonzero())
                     if zero_norm_H_man_opt_re - zero_norm_gt > 0:
                         non_zero_man_opt_re.append([j, zero_norm_H_man_opt_re - zero_norm_gt])
                         if zero_norm_H_man_opt_re-zero_norm_gt < 3 and zero_norm_H_man_opt_re-zero_norm_gt>0:
-                            man_opt_count['gt']['re'][zero_norm_H_man_opt_re - zero_norm_gt] += 1
+                            man_opt_count['clean']['rgd'][zero_norm_H_man_opt_re - zero_norm_gt] += 1
                         elif zero_norm_H_man_opt_re-zero_norm_gt >= 3:
-                            man_opt_count['gt']['re'][3] += 1
+                            man_opt_count['clean']['rgd'][3] += 1
                     H_man_opt_re_noise, H_man_opt_la_noise = compute_hessian_rotmatrix(data[j], method,
                                                                                        noisy_rot=True)
                     H_man_opt_la_noise[H_man_opt_la_noise != torch.clamp(H_man_opt_la_noise, clamp_noise)] = 0
@@ -116,17 +124,17 @@ for names_d in names.keys():
                     if zero_norm_H_man_opt_la_noise - zero_norm_gt > 0:
                         non_zero_man_opt_la_noise.append([j, zero_norm_H_man_opt_la_noise - zero_norm_gt])
                         if zero_norm_H_man_opt_la_noise-zero_norm_gt < 3 and zero_norm_H_man_opt_la_noise-zero_norm_gt>0:
-                            man_opt_count['noise']['la'][zero_norm_H_man_opt_la_noise - zero_norm_gt] += 1
+                            man_opt_count['noisy']['la'][zero_norm_H_man_opt_la_noise - zero_norm_gt] += 1
                         elif zero_norm_H_man_opt_la_noise-zero_norm_gt >= 3:
-                            man_opt_count['noise']['la'][3] += 1
+                            man_opt_count['noisy']['la'][3] += 1
                     H_man_opt_re_noise[H_man_opt_re_noise != torch.clamp(H_man_opt_re_noise, clamp_noise)] = 0
                     zero_norm_H_man_opt_re_noise = len(H_man_opt_re_noise.nonzero())
                     if zero_norm_H_man_opt_re_noise - zero_norm_gt > 0:
                         non_zero_man_opt_re_noise.append([j, zero_norm_H_man_opt_re_noise - zero_norm_gt])
                         if zero_norm_H_man_opt_re_noise-zero_norm_gt < 3:
-                            man_opt_count['noise']['re'][zero_norm_H_man_opt_re_noise - zero_norm_gt] += 1
+                            man_opt_count['noisy']['rgd'][zero_norm_H_man_opt_re_noise - zero_norm_gt] += 1
                         else:
-                            man_opt_count['noise']['re'][3] += 1
+                            man_opt_count['noisy']['rgd'][3] += 1
                 else:
                     H_man_opt_gs_re, H_man_opt_gs_la = compute_hessian_rotmatrix(data[j], method)
                     H_man_opt_gs_la[H_man_opt_gs_la != torch.clamp(H_man_opt_gs_la, clamp)] = 0
@@ -134,34 +142,34 @@ for names_d in names.keys():
                     if zero_norm_H_man_opt_gs_la - zero_norm_gt > 0:
                         non_zero_man_opt_gs_la.append([j, zero_norm_H_man_opt_gs_la - zero_norm_gt])
                         if zero_norm_H_man_opt_gs_la - zero_norm_gt < 3:
-                            man_opt_gs_count['gt']['la'][zero_norm_H_man_opt_gs_la - zero_norm_gt] += 1
+                            man_opt_gs_count['clean']['la'][zero_norm_H_man_opt_gs_la - zero_norm_gt] += 1
                         else:
-                            man_opt_gs_count['gt']['la'][3] += 1
+                            man_opt_gs_count['clean']['la'][3] += 1
                     H_man_opt_gs_re[H_man_opt_gs_re != torch.clamp(H_man_opt_gs_re, clamp)] = 0
                     zero_norm_H_man_opt_gs_re = len(H_man_opt_gs_re.nonzero())
                     if zero_norm_H_man_opt_gs_re - zero_norm_gt > 0:
                         non_zero_man_opt_gs_re.append([j, zero_norm_H_man_opt_gs_re - zero_norm_gt])
                         if zero_norm_H_man_opt_gs_re - zero_norm_gt < 3:
-                            man_opt_gs_count['gt']['re'][zero_norm_H_man_opt_gs_re - zero_norm_gt] += 1
+                            man_opt_gs_count['clean']['rgd'][zero_norm_H_man_opt_gs_re - zero_norm_gt] += 1
                         else:
-                            man_opt_gs_count['gt']['re'][3] += 1
+                            man_opt_gs_count['clean']['rgd'][3] += 1
                     H_man_opt_gs_re_noise, H_man_opt_gs_la_noise = compute_hessian_rotmatrix(data[j], method, noisy_rot=True)
                     H_man_opt_gs_la_noise[H_man_opt_gs_la_noise != torch.clamp(H_man_opt_gs_la_noise, clamp_noise)] = 0
                     zero_norm_H_man_opt_gs_la_noise = len(H_man_opt_gs_la_noise.nonzero())
                     if zero_norm_H_man_opt_gs_la_noise - zero_norm_gt > 0:
                         non_zero_man_opt_gs_la_noise.append([j, zero_norm_H_man_opt_gs_la_noise - zero_norm_gt])
                         if zero_norm_H_man_opt_gs_la_noise - zero_norm_gt < 3:
-                            man_opt_gs_count['noise']['la'][zero_norm_H_man_opt_gs_la_noise - zero_norm_gt] += 1
+                            man_opt_gs_count['noisy']['la'][zero_norm_H_man_opt_gs_la_noise - zero_norm_gt] += 1
                         else:
-                            man_opt_gs_count['noise']['la'][3] += 1
+                            man_opt_gs_count['noisy']['la'][3] += 1
                     H_man_opt_gs_re_noise[H_man_opt_gs_re_noise != torch.clamp(H_man_opt_gs_re_noise, clamp_noise)] = 0
                     zero_norm_H_man_opt_gs_re_noise = len(H_man_opt_gs_re_noise.nonzero())
                     if zero_norm_H_man_opt_gs_re_noise - zero_norm_gt > 0:
                         non_zero_man_opt_gs_re_noise.append([j, zero_norm_H_man_opt_gs_re_noise - zero_norm_gt])
                         if zero_norm_H_man_opt_gs_re_noise - zero_norm_gt < 3:
-                            man_opt_gs_count['noise']['re'][zero_norm_H_man_opt_gs_re_noise - zero_norm_gt] += 1
+                            man_opt_gs_count['noisy']['rgd'][zero_norm_H_man_opt_gs_re_noise - zero_norm_gt] += 1
                         else:
-                            man_opt_gs_count['noise']['re'][3] += 1
+                            man_opt_gs_count['noisy']['rgd'][3] += 1
 
             print_string += '\n Landing \n'
             print('\n Landing-method \n')

@@ -8,7 +8,10 @@ from os.path import dirname, abspath
 
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    #device = torch.device('cuda')
+#else:
+#    if torch.cuda.is_available() else 'cpu'
+
 out_dir = dirname(dirname(abspath(__file__)))+'/Output_algoritms/Random_functions'
 report_dir = dirname(dirname(abspath(__file__))) + '/Plots/Random_functions'
 
@@ -181,7 +184,7 @@ def plot_loss_ratio(etas, names, noisy_data=False):
 
                     else:
                         x_0 += 1
-                        print('@@@@@@@@@@@@@@@@@@@@@@@@',j, x_0)
+                        print('@@@@@@@@@@@@@@@@@@@@@@@@', j, x_0)
                 if ind_clamp == len(etas) - 1:
                     if h_size == 1 / 2:
                         c_losses_man_opt_la = torch.stack(c_losses_man_opt_la, dim=0)

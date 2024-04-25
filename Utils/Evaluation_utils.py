@@ -7,23 +7,20 @@ from Libs.Grid_Search import Method
 
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
-    device = torch.device('cuda')
-else:
-    device = torch.device('cpu')
+    #device = torch.device('cuda')
+#else:
+    #device = torch.device('cpu')
 
 batches = {
-    2: {3: math.pi,
-        1: math.pi,
+    2: {1: math.pi,
         1 / 2: math.pi,
         1 / 4: math.pi,
         1 / 8: math.pi},
-    3: {3: math.pi,
-        1: math.pi / 2,
+    3: {1: math.pi / 2,
         1 / 2: math.pi / 2,
         1 / 4: math.pi / 2,
         1 / 8: math.pi / 2},
-    4: {3: math.pi,
-        1: math.pi / 2,
+    4: {1: math.pi / 2,
         1 / 2: math.pi / 2,
         1 / 4: math.pi / 2,
         1 / 8: 1.0}
@@ -69,50 +66,48 @@ def get_total_Rot(data, j, init_method=Init_Method.RI):
         if b > 1 and b <= 5:
             b_ad_inner_ = str(b_ad_inner)
             if init_method == Init_Method.RI:
-                U_La_[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(data[j]['R']['gt']['Man_Opt'][b_ad_inner_]['la'])
+                U_La_[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(data[j]['R']['clean']['Man_Opt_RI'][b_ad_inner_]['la'])
 
-                U_Rgd_[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(data[j]['R']['gt']['Man_Opt'][b_ad_inner_]['re'])
+                U_Rgd_[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(data[j]['R']['clean']['Man_Opt_RI'][b_ad_inner_]['rgd'])
             else:
                 U_La_[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(
-                    data[j]['R']['gt']['Man_Opt_GS'][b_ad_inner_]['la'])
+                    data[j]['R']['clean']['Man_Opt_GS'][b_ad_inner_]['la'])
                 U_Rgd_[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(
-                    data[j]['R']['gt']['Man_Opt_GS'][b_ad_inner_]['re'])
+                    data[j]['R']['clean']['Man_Opt_GS'][b_ad_inner_]['rgd'])
             b_ad_inner += 1
         b_ad += b
     return U_La_ @ P @ U1.T, U_Rgd_ @ P @ U1.T
 
 
-def compute_hessian_rotmatrix(data, method, noise_data=False, noisy_rot=False,
+def compute_hessian_rotmatrix(data, method, noisy_data=False, noisy_rot=False,
                               basis_hess=False, p=1):
     '''
     :param data:
     :param method:
-    :param noise_data:
+    :param noisy_data:
     :param noisy_rot:
     :param basis_hess:
     :param p:
     :return:
     '''
-    if noise_data:
-        key_hessian = 'svd_basis_noisis' if basis_hess else 'hessian_noise'
-    else:
-        key_hessian = 'svd_basis' if basis_hess else 'hessian'
-    hessian = torch.as_tensor(data[key_hessian], dtype=torch.float64)
-    method_name = 'Man_Opt' if method == Method.Manifold_Opt else 'Man_Opt_GS' if method == Method.Manifold_Opt_GS else 'Grid_search'
-    gt_no_key = 'noise' if noisy_rot else 'gt'
-    U_Rgd = torch.as_tensor(data['R'][gt_no_key][method_name]['re'], dtype=torch.float64)
-    U_La = torch.as_tensor(data['R'][gt_no_key][method_name]['la'], dtype=torch.float64)
+    key_clean_noisy = 'clean' if not noisy_data else 'noisy'
+    key_hessian = 'svd_basis' if basis_hess else 'hessian'
+    hessian = torch.as_tensor(data[key_hessian][key_clean_noisy], dtype=torch.float64)
+    method_name = 'Man_Opt_RI' if method == Method.Manifold_Opt else 'Man_Opt_GS' if method == Method.Manifold_Opt_GS else 'Grid_search'
+    clean_noisy_key = 'noisy' if noisy_rot else 'clean'
+    U_rgd = torch.as_tensor(data['R'][clean_noisy_key][method_name]['rgd'], dtype=torch.float64)
+    U_la = torch.as_tensor(data['R'][clean_noisy_key][method_name]['la'], dtype=torch.float64)
     if p == 1:
-        matrix_rgd = (U_Rgd @ hessian @ U_Rgd.T).abs().mean(dim=0)
-        matrix_la = (U_La @ hessian @ U_La.T).abs().mean(dim=0)
+        matrix_rgd = (U_rgd @ hessian @ U_rgd.T).abs().mean(dim=0)
+        matrix_la = (U_la @ hessian @ U_la.T).abs().mean(dim=0)
         return matrix_rgd, matrix_la
     elif p == 2:
-        matrix_rgd = ((U_Rgd @ hessian @ U_Rgd.T).abs() ** 2).mean(dim=0).sqrt()
-        matrix_la = ((U_La @ hessian @ U_La.T).abs() ** 2).mean(dim=0).sqrt()
+        matrix_rgd = ((U_rgd @ hessian @ U_rgd.T).abs() ** 2).mean(dim=0).sqrt()
+        matrix_la = ((U_la @ hessian @ U_la.T).abs() ** 2).mean(dim=0).sqrt()
         return matrix_rgd, matrix_la
     elif p == math.inf:
-        matrix_rgd = (U_Rgd @ hessian @ U_Rgd.T).abs().max(dim=0)
-        matrix_la = (U_La @ hessian @ U_La.T).abs().max(dim=0)
+        matrix_rgd = (U_rgd @ hessian @ U_rgd.T).abs().max(dim=0)
+        matrix_la = (U_la @ hessian @ U_la.T).abs().max(dim=0)
         return matrix_rgd, matrix_la
     else:
         print('\n p is not defined')
@@ -129,28 +124,28 @@ def get_len_loss(names, out_dir):
             data = json.load(convert_file)
             for j in data.keys():
                 if data[j]['h_size'] == 1 / 2:
-                    if len(data[j]['loss']['gt']['Man_Opt']['la']) > max_loss_man_opt_2:
-                        max_loss_man_opt_2 = len(data[j]['loss']['gt']['Man_Opt']['la'])
-                    if len(data[j]['loss']['gt']['Man_Opt']['re']) > max_loss_man_opt_2:
-                        max_loss_man_opt_2 = len(data[j]['loss']['gt']['Man_Opt']['re'])
+                    if len(data[j]['loss']['clean']['Man_Opt_RI']['la']) > max_loss_man_opt_2:
+                        max_loss_man_opt_2 = len(data[j]['loss']['clean']['Man_Opt_RI']['la'])
+                    if len(data[j]['loss']['clean']['Man_Opt_RI']['rgd']) > max_loss_man_opt_2:
+                        max_loss_man_opt_2 = len(data[j]['loss']['clean']['Man_Opt_RI']['rgd'])
 
-                    if len(data[j]['loss']['noise']['Man_Opt']['la']) > max_loss_man_opt_2_noise:
+                    if len(data[j]['loss']['noise']['Man_Opt_RI']['la']) > max_loss_man_opt_2_noise:
                         max_loss_man_opt_2_noise = len(
-                            data[j]['loss']['noise']['Man_Opt']['la'])
-                    if len(data[j]['loss']['noise']['Man_Opt']['re']) > max_loss_man_opt_2_noise:
+                            data[j]['loss']['noise']['Man_Opt_RI']['la'])
+                    if len(data[j]['loss']['noise']['Man_Opt_RI']['rgd']) > max_loss_man_opt_2_noise:
                         max_loss_man_opt_2_noise = len(
-                            data[j]['loss']['noise']['Man_Opt']['re'])
-                if len(data[j]['loss']['gt']['Man_Opt_GS']['la']) > max_loss_man_opt_2:
-                    max_loss_man_opt_2 = len(data[j]['loss']['gt']['Man_Opt_GS']['la'])
+                            data[j]['loss']['noise']['Man_Opt_RI']['rgd'])
+                if len(data[j]['loss']['clean']['Man_Opt_GS']['la']) > max_loss_man_opt_2:
+                    max_loss_man_opt_2 = len(data[j]['loss']['clean']['Man_Opt_GS']['la'])
 
-                if len(data[j]['loss']['gt']['Man_Opt_GS']['re']) > max_loss_man_opt_2:
-                    max_loss_man_opt_2 = len(data[j]['loss']['gt']['Man_Opt_GS']['re'])
+                if len(data[j]['loss']['clean']['Man_Opt_GS']['rgd']) > max_loss_man_opt_2:
+                    max_loss_man_opt_2 = len(data[j]['loss']['clean']['Man_Opt_GS']['rgd'])
 
                 if len(data[j]['loss']['noise']['Man_Opt_GS']['la']) > max_loss_man_opt_2_noise:
                     max_loss_man_opt_2_noise = len(data[j]['loss']['noise']['Man_Opt_GS']['la'])
 
-                if len(data[j]['loss']['gt']['Man_Opt_GS']['re']) > max_loss_man_opt_2_noise:
-                    max_loss_man_opt_2_noise = len(data[j]['loss']['noise']['Man_Opt_GS']['re'])
+                if len(data[j]['loss']['clean']['Man_Opt_GS']['rgd']) > max_loss_man_opt_2_noise:
+                    max_loss_man_opt_2_noise = len(data[j]['loss']['noise']['Man_Opt_GS']['rgd'])
         print('max_loss_man_opt_2: ', max_loss_man_opt_2)
         print('max_loss_man_opt_re: ', max_loss_man_opt_2_noise)
         return max_loss_man_opt_2, max_loss_man_opt_2_noise
@@ -171,7 +166,7 @@ def loss_function12(rot, hessian, eps=0):
     if rot.ndim == 2:
         res = torch.matmul(torch.matmul(rot, hessian), rot.t())
         res2 = ((res.abs() ** 2).mean(dim=0) + eps).sqrt()
-        loss = 2 * torch.triu(res2, diagonal=1).sum()
+        loss = res2.sum()
         return loss
     elif rot.ndim == 4:
         mult = torch.matmul(rot, hessian)
@@ -183,7 +178,6 @@ def loss_function12(rot, hessian, eps=0):
 
 def loss_function_sparse(rot, hessian):
     '''
-
     :param rot:
     :param hessian:
     :param upper:
@@ -195,7 +189,7 @@ def loss_function_sparse(rot, hessian):
         hessian = hessian.to(torch.float64)
 
     res = torch.matmul(torch.matmul(rot, hessian), rot.t())
-    res2 = ((res.abs() ** 2).mean(dim=0) ** .25).sqrt()  # **.5
-    loss = (res2.sum()) ** 2
+    res2 = (res.abs() ** 2).mean(dim=0) ** .25
+    loss = res2.sum() ** 2
     return loss
 

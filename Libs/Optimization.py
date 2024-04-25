@@ -7,7 +7,7 @@ import torch
 import time
 import math
 from Libs.Rotations import compute_rotation_U
-
+from Utils.Evaluation_utils import loss_function12, loss_function_sparse
 
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
@@ -63,17 +63,17 @@ def stiefel_manifold_opt(hessian, init_rot=None, n_epochs_=int(2e4),
         scheduler = MultiplicativeLR(optimizer, lr_lambda=lmbda)
         epoch = 0
         with torch.no_grad():
-            res = torch.matmul(torch.matmul(param, hessian), param.t())
-            res2 = ((res.abs() ** 2).mean(dim=0) + 1e-8).sqrt()  # **.5
-            loss = torch.norm(res2, p=1)
+            #res = torch.matmul(torch.matmul(param, hessian), param.t())
+            #res2 = ((res.abs() ** 2).mean(dim=0) + 1e-8).sqrt()  # **.5
+            loss = loss_function12(param, hessian, eps=1e-8)#torch.norm(res2, p=1)
         xi_norm = 3
         while epoch <= n_epochs and xi_norm > 1e-17:
             loss1 = loss.clone().detach()
             optimizer.zero_grad()
-            res = torch.matmul(torch.matmul(param, hessian), param.t())
+            #res = torch.matmul(torch.matmul(param, hessian), param.t())
 
-            res2 =((res.abs()**2).mean(dim=0)+1e-8).sqrt()
-            loss = torch.norm(res2, p=1)
+            #res2 =((res.abs()**2).mean(dim=0)+1e-8).sqrt()
+            loss = loss_function12(param, hessian, eps=1e-8) #torch.norm(res2, p=1)
 
             if loss.clone().item() < test_min:
                 test_min = loss.clone().item()
@@ -144,14 +144,15 @@ def random_init(hessian, method=RiemannianSGD, D=5, n_inits=5, n_init_epochs=int
         scheduler = MultiplicativeLR(optimizer, lr_lambda=lmbda)
         epoch = 0
         xi_norm = 3
-        while epoch <= n_init_epochs and xi_norm>1e-17:
+        while epoch <= n_init_epochs and xi_norm > 1e-17:
             optimizer.zero_grad()
-            res = torch.matmul(torch.matmul(param, hessian), param.t())
-            res2 = ((res.abs() ** 2).mean(dim=0)+1e-8).sqrt()
-            loss = res2.sum()
+            #res = torch.matmul(torch.matmul(param, hessian), param.t())
+            #res2 = ((res.abs() ** 2).mean(dim=0)+1e-8).sqrt()
+            loss = loss_function12(param, hessian, eps=1e-8)#res2.sum()
             if loss.item() < test_min2:
                 test_min = loss.item()
-                test_min2 = (((torch.matmul(torch.matmul(param, hessian), param.t()).abs()**2).mean(dim=0)**.25).sum()**2)
+                test_min2 = loss_function_sparse(param, hessian)
+                #(((torch.matmul(torch.matmul(param, hessian), param.t()).abs()**2).mean(dim=0)**.25).sum()**2)
                 param_min = param.clone().detach()
             loss.backward()
             with torch.no_grad():

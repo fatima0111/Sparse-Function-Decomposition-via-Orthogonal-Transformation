@@ -6,22 +6,16 @@ with tilte: Manifold optimization on $SO(d)$ for jointly sparsifying a set of sy
 import argparse
 import copy
 from os.path import dirname, abspath
-import sys
 import torch
 
-if '/homes/math/ba/trafo_nova/' not in sys.path:
-    sys.path.append('/homes/math/ba/trafo_nova/')
-if '/homes/numerik/fatimaba/store/Github/trafo_nova/' not in sys.path:
-    sys.path.append('/homes/numerik/fatimaba/store/Github/trafo_nova/')
-if '//' not in sys.path:
-    sys.path.append('//')
 
+from Utils.Evaluation_utils import NumpyEncoder
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
-    device = torch.device('cuda')
+    #device = torch.device('cuda')
     gdtype = torch.float64
 else:
-    device = torch.device('cpu')
+    #device = torch.device('cpu')
     gdtype = torch.float64
 
 from Libs.Grid_Search import *
