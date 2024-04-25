@@ -17,8 +17,10 @@ if '//' not in sys.path:
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
     device = torch.device('cuda')
+    gdtype = torch.float64
 else:
     device = torch.device('cpu')
+    gdtype = torch.float64
 
 from Libs.Optimization import stiefel_manifold_opt
 from Libs.Rotations import compute_rotation_U, generate_angles_interval
@@ -32,7 +34,6 @@ class Method(Enum):
 class Node:
     def __init__(self, key=None, start_v=None, end_v=None):
         '''
-
         :param key:
         :param start_v:
         :param end_v:
@@ -52,6 +53,7 @@ class Graph:
         self.batch_h = batch_h
         self.bild_graph(d)
         self.path = []
+
 
     def bild_graph(self, d, start=0):
         '''
@@ -74,14 +76,15 @@ class Graph:
                 self.nodes[i].append(c_node)
             len_batch_old += len(batch_points[:-1])
 
+
 class Grid_Search:
     def __init__(self, datas=None, hessians=None, h=.5, batch_h=math.pi/2, block_form=False):
         '''
-
-        :param hessian:
-        :param v:
+        :param datas:
+        :param hessians:
         :param h:
         :param batch_h:
+        :param block_form:
         '''
         print('\n Start Grid: ')
         self.block_form = block_form
@@ -121,10 +124,13 @@ class Grid_Search:
             self.cover_grid(datas=datas)
         else:
             self.cover_grid(hessians=hessians)
+
+
     def loss(self, R, datas=None, hessians=None):
         '''
         :param R:
-        :param hessian:
+        :param datas:
+        :param hessians:
         :return:
         '''
         times = []
@@ -143,8 +149,8 @@ class Grid_Search:
         else:
             assert(datas is not None)
             for data in datas:
-                hessian = torch.as_tensor(data['svd_basis'], dtype=torch.float64)
-                hessian_noisy = torch.as_tensor(data['svd_basis_noisis'], dtype=torch.float64)
+                hessian = torch.as_tensor(data['svd_basis'], dtype=gdtype)
+                hessian_noisy = torch.as_tensor(data['svd_basis_noisis'], dtype=gdtype)
                 out1, out2 = self.closs(R, hessian, hessian_noisy)
                 times.append(out1[0])
                 min_rotations.append(out1[1])
@@ -157,7 +163,6 @@ class Grid_Search:
 
     def closs(self, R, hessian, hessian_noisy=None):
         '''
-
         :param R:
         :param hessian:
         :param hessian_noisy:
@@ -167,8 +172,8 @@ class Grid_Search:
         mult1 = torch.matmul(
             R.reshape(R.shape[0], 1, R.shape[1], R.shape[1]),
             hessian.reshape(1, hessian.shape[0], hessian.shape[1], hessian.shape[1]))
-        losses = ((torch.matmul(mult1,
-                                R.reshape(R.shape[0], 1, R.shape[1], R.shape[1]).permute([0, 1, 3, 2])
+        losses = ((torch.matmul(mult1, R.reshape(R.shape[0], 1, R.shape[1], R.shape[1]
+                                          ).permute([0, 1, 3, 2])
                                 ).abs() ** 2).mean(dim=1) ** .5).sum(dim=[1, 2])
         time1 = time.time() - t1
         ind = torch.argmin(losses)
@@ -200,6 +205,7 @@ class Grid_Search:
         parameters = [[0, 2 * math.pi]] * self.p
         return parameters
 
+
     def discretize_grid(self):
         '''
         :return:
@@ -218,6 +224,7 @@ class Grid_Search:
             set_in[-1] = set_in[-1] if set_in[-1] <= self.graph.path[ind_i].end_v else self.graph.path[ind_i].end_v
             sets.append(set_in)
         return torch.cartesian_prod(*sets)
+
 
     def update_rot(self, datas=None, hessians=None):
         '''
@@ -249,6 +256,7 @@ class Grid_Search:
             return time_rot, times_losses, times_noisy_losses
         else:
             return time_rot, times_losses, []
+
 
     def cover_grid(self, datas=None, hessians=None):
         '''
@@ -286,8 +294,8 @@ def run_grid_search(datas, h=1/2, batch_h=math.pi/2, convert_to_list=True):
         j = int(j)
         result_grid_search = [grid.min_rotations[j], grid.min_losses[j]]
         result_grid_search_noise = [grid.min_rotations_noisy[j], grid.min_losses_noisy[j]]
-        #hessian = torch.as_tensor(data['hessian'], dtype=torch.float64)
-        #hessian_noise = torch.as_tensor(data['hessian_noise'], dtype=torch.float64)
+        #hessian = torch.as_tensor(data['hessian'], dtype=gdtype)
+        #hessian_noise = torch.as_tensor(data['hessian_noise'], dtype=gdtype)
         #data['M']['gt']['Grid_search'] = (result_grid_search[0] @ hessian @ result_grid_search[0].T).abs().mean(
         #    dim=0)
         #data['M']['noise']['Grid_search'] = (
@@ -314,9 +322,9 @@ def run_Man_Opt(data, optimizer_method=Method.Grid_Search, h=1/2, batch_h=math.p
     :return:
     '''
     hessian = torch.as_tensor(data['svd_basis']['clean'],
-                              dtype=torch.float64
+                              dtype=gdtype
                               ) if not noisy_data else torch.as_tensor(
-        data['svd_basis']['noisy'], dtype=torch.float64)
+        data['svd_basis']['noisy'], dtype=gdtype)
     if optimizer_method == Method.Manifold_Opt:
         out = stiefel_manifold_opt(hessian, n_epochs_=N_epochs, print_mode=print_mode,
                                    opt_method=opt_method, learning_rate=learning_rate)
@@ -328,10 +336,10 @@ def run_Man_Opt(data, optimizer_method=Method.Grid_Search, h=1/2, batch_h=math.p
             t2 = time.time()
             print('\n time: Grid Search : ', t2 - t1)
         min_rot = torch.as_tensor(data['U']['clean']['Grid_search'],
-                                  dtype=torch.float64
+                                  dtype=gdtype
                                   ) if not noisy_data else torch.as_tensor(
                                 data['U']['noisy']['Grid_search'],
-                                  dtype=torch.float64)
+                                  dtype=gdtype)
         if optimizer_method == Method.Manifold_Opt_GS:
             out = stiefel_manifold_opt(hessian, init_rot=min_rot, n_epochs_=N_epochs,
                                        print_mode=print_mode, opt_method=opt_method,

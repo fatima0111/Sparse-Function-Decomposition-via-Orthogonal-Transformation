@@ -6,14 +6,8 @@ with tilte: Manifold optimization on $SO(d)$ for jointly sparsifying a set of sy
 import argparse
 import copy
 from os.path import dirname, abspath
-import sys
 import torch
-if '/homes/math/ba/trafo_nova/' not in sys.path:
-    sys.path.append('/homes/math/ba/trafo_nova/')
-if '/homes/numerik/fatimaba/store/Github/trafo_nova/' not in sys.path:
-    sys.path.append('/homes/numerik/fatimaba/store/Github/trafo_nova/')
-if '//' not in sys.path:
-    sys.path.append('//')
+
 
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.DoubleTensor')
@@ -24,7 +18,8 @@ else:
     gdtype = torch.float64
 
 from Libs.Grid_Search import *
-
+from Utils.Evaluation_utils import NumpyEncoder
+from Utils.Generation_utils import batches_random_matrices
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--output_folder', default='/work/ba/output',
@@ -49,26 +44,7 @@ N_run = args.N_run
 dim = args.dim
 in_dir = dirname(dirname(abspath(__file__)))+'/Test_Cases_Man_Opt_GS'
 out_dir = args.output_folder + '/Grid_Search_Output'
-batches = {
-    2: {1.0: math.pi,
-        1 / 2: math.pi,
-        1 / 4: math.pi,
-        1 / 8: math.pi,
-        1/10: math.pi},
-    3: {1.0: math.pi / 2,
-        1 / 2: math.pi / 2,
-        1 / 4: math.pi / 2,
-        1 / 8: math.pi / 2,
-        1/10: math.pi/2},
-    4: {1.0: math.pi / 2,
-        1 / 2: math.pi / 2,
-        1 / 4: math.pi / 2,
-        1 / 8: math.pi/2,
-        1/10: 1.0},
-    5: {1: 2.36,
-        1/2: 1.5,
-        1/4: 0.75}
-}
+batches = batches_random_matrices
 if h_size in batches[dim].keys():
     batch_h = batches[dim][h_size]
     filename = '{}/Hessians_dim_{}_N_100.json'.format(in_dir, dim)
@@ -79,8 +55,8 @@ if h_size in batches[dim].keys():
         for j in range(start_N_run, N_run):
             new_datas[str(j)] = datas[str(j)]
         run_grid_search(new_datas, h_size, batch_h)
-        with open('{}/Hessian_GS_{}_h_{}_bh_{:.2f}_dim_{}_gs.json'.format(out_dir, args.suffix_file, args.h_size,
-                                                                                          batch_h, dim), 'w') as convert_file:
+        with open('{}/Hessian_GS_{}_h_{}_bh_{:.2f}_dim_{}_gs.json'.format(
+                out_dir, args.suffix_file, args.h_size, batch_h, dim), 'w') as convert_file:
             json.dump(new_datas, convert_file, cls=NumpyEncoder)
 elif h_size == -1:
     for ch_size in batches[dim].keys():

@@ -5,6 +5,42 @@ import itertools
 import random
 import math
 
+batches_random_matrices = {
+    2: {1.0: math.pi,
+        1 / 2: math.pi,
+        1 / 4: math.pi,
+        1 / 8: math.pi,
+        1/10: math.pi},
+    3: {1.0: math.pi / 2,
+        1 / 2: math.pi / 2,
+        1 / 4: math.pi / 2,
+        1 / 8: math.pi / 2,
+        1/10: math.pi/2},
+    4: {1.0: math.pi / 2,
+        1 / 2: math.pi / 2,
+        1 / 4: math.pi / 2,
+        1 / 8: math.pi/2,
+        1/10: 1.0},
+    5: {1: 2.36}
+}
+
+batches_random_functions = {
+        2: {3: math.pi,
+            1: math.pi,
+            1/2: math.pi,
+            1/4: math.pi,
+            1/8: math.pi},
+        3: {3: math.pi,
+            1: math.pi / 2,
+            1 / 2: math.pi / 2,
+            1 / 4: math.pi / 2,
+            1 / 8: math.pi / 2},
+        4: {3: math.pi,
+            1: math.pi / 2,
+            1 / 2: math.pi / 2,
+            1 / 4: math.pi / 2,
+            1 / 8: 1.0}
+    }
 def generate_cop(d=5, s=5):
     '''
     Generates a set of jointly non-sparse entries J
