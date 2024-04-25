@@ -46,7 +46,7 @@ def generate_components(J, blocks):
 
 if __name__ == '__main__':
     gen_block = True
-    tmp1 = {
+    tmp = {
             'Grid_search': {},
             'Man_Opt': {
                 'la': {},
@@ -57,7 +57,6 @@ if __name__ == '__main__':
                 'rgd': {}
             }
         }
-    tmp = {'clean': copy.deepcopy(tmp1), 'noisy': copy.deepcopy(tmp1)}
     Output = {}
     N_run = 30
     output_folder = dirname(dirname(abspath(__file__)))+'/Dataset'

@@ -11,6 +11,7 @@ if torch.cuda.is_available():
     #device = torch.device('cuda')
 #else:
 #    if torch.cuda.is_available() else 'cpu'
+gtype = torch.float64
 
 out_dir = dirname(dirname(abspath(__file__)))+'/Output_algoritms/Random_functions'
 report_dir = dirname(dirname(abspath(__file__))) + '/Plots/Random_functions'
@@ -46,10 +47,8 @@ def plot_loss_ratio(etas, names, noisy_data=False):
     man_opt_gs_clamp = {}
     for h in h_sizes:
         man_opt_gs_clamp[h] = {}
-        man_opt_gs_clamp[h]['gt'] = {}
-        man_opt_gs_clamp[h]['noise'] = {}
-        man_opt_gs_clamp[h]['gt']['la'] = torch.zeros(len(etas))
-        man_opt_gs_clamp[h]['gt']['re'] = torch.zeros(len(etas))
+        man_opt_gs_clamp[h]['la'] = torch.zeros(len(etas))
+        man_opt_gs_clamp[h]['re'] = torch.zeros(len(etas))
 
     for ind_names, name in enumerate(names):
         with open('{}/{}'.format(out_dir, name), 'r') as convert_file:
@@ -67,18 +66,18 @@ def plot_loss_ratio(etas, names, noisy_data=False):
                 x_0 = 0
                 for j in data.keys():
                     if len(data[j]['SBD_GT']) > 1:
-                        x_test = data[j]['x_test'] = torch.as_tensor(data[j]['x_test'], dtype=torch.float64)
+                        x_test = data[j]['x_test'] = torch.as_tensor(data[j]['x_test'], dtype=gtype)
                         supp = int(data[j]['support'])
-                        dim = (data[j]['dim'])
+                        dim = (data[j]['d'])
                         h_size = float(name.split('_h_')[1].split('_N')[0])
                         ground_truth = data[j]['groundtruth']
-                        ground_truth['v'] = torch.as_tensor(ground_truth['v'], dtype=torch.float64)
+                        ground_truth['R'] = torch.as_tensor(ground_truth['R'], dtype=gtype)
                         v = ground_truth['v']
                         rank = int(data[j]['rank_hessian'])
                         hessianF_orig = compute_hessian_orig_2d(x_test.clone(), ground_truth)
                         hessian_f, _ = compute_hessian_orig_2d(x_test.clone(), ground_truth, return_coupling=True)
                         if ind_clamp == len(etas)-1:
-                            u_grad = torch.as_tensor(data[j]['grad_U'], dtype=torch.float64)
+                            u_grad = torch.as_tensor(data[j]['grad_U'], dtype=gtype)
                             u2, d2, v2 = torch.svd((u_grad.T @ hessianF_orig @ u_grad).flatten(start_dim=1).T)
 
                             hessian_basis_1 = u2.T[:rank].reshape(rank, dim, dim)
@@ -87,8 +86,8 @@ def plot_loss_ratio(etas, names, noisy_data=False):
                             res2 = ((res.abs() ** 2).mean(dim=0)).sqrt()
                             loss = torch.norm(res2, p=1)
                             BlockSizes = data[j]['SBD_GT']
-                            hessian_rank = torch.as_tensor(data[j]['svd_basis'], dtype=torch.float64)
-                            P = torch.as_tensor(data[j]['P'], dtype=torch.float64)
+                            hessian_rank = torch.as_tensor(data[j]['svd_basis'], dtype=gtype)
+                            P = torch.as_tensor(data[j]['P'], dtype=gtype)
                             hessian_rank_blocks = P @ hessian_rank @ P.T
 
                         H_gt = ((v @ hessianF_orig @ v.T).abs()).mean(dim=0)
@@ -103,9 +102,9 @@ def plot_loss_ratio(etas, names, noisy_data=False):
                         H_re[H_re != torch.clamp(H_re, clamp)] = 0
                         zero_norm_H_re = len(H_re.nonzero())
                         if zero_norm_H_la - zero_norm_ht > 0:
-                            man_opt_gs_clamp[h_size]['gt']['la'][ind_clamp] += 1
+                            man_opt_gs_clamp[h_size]['la'][ind_clamp] += 1
                         if zero_norm_H_re - zero_norm_ht > 0:
-                            man_opt_gs_clamp[h_size]['gt']['re'][ind_clamp] += 1
+                            man_opt_gs_clamp[h_size]['rgd'][ind_clamp] += 1
                         if h_size == 1 / 2:
                             Rot_mo_la, Rot_mo_re = get_total_Rot(data, j)
                             H_mo_la = ((Rot_mo_la @ hessianF_orig @ Rot_mo_la.T).abs()).mean(dim=0)
@@ -126,15 +125,15 @@ def plot_loss_ratio(etas, names, noisy_data=False):
                                 ind_b = '0'
                                 for b in BlockSizes:
                                     if b > 1 and b <= 4:
-                                        man_opt_loss_la = data[j]['loss']['gt']['Man_Opt'][ind_b]['la']
+                                        man_opt_loss_la = data[j]['loss']['Man_Opt_RI'][ind_b]['la']
                                         man_opt_loss_la = man_opt_loss_la[:min(len_loss + 1, len(man_opt_loss_la))]
                                         man_opt_loss_la += [man_opt_loss_la[-1]] * (len_loss - len(man_opt_loss_la))
 
-                                        man_opt_loss_re = data[j]['loss']['gt']['Man_Opt'][ind_b]['re']
+                                        man_opt_loss_re = data[j]['loss']['Man_Opt_RI'][ind_b]['rgd']
                                         man_opt_loss_re = man_opt_loss_re[:min(len_loss + 1, len(man_opt_loss_re))]
                                         man_opt_loss_re += [man_opt_loss_re[-1]] * (len_loss - len(man_opt_loss_re))
-                                        man_opt_loss_la_ += torch.as_tensor(man_opt_loss_la, dtype=torch.float64)
-                                        man_opt_loss_re_ += torch.as_tensor(man_opt_loss_re, dtype=torch.float64)
+                                        man_opt_loss_la_ += torch.as_tensor(man_opt_loss_la, dtype=gtype)
+                                        man_opt_loss_re_ += torch.as_tensor(man_opt_loss_re, dtype=gtype)
 
                                         ind_b = int(ind_b) + 1
                                         ind_b = str(ind_b)
@@ -144,7 +143,7 @@ def plot_loss_ratio(etas, names, noisy_data=False):
                                         man_opt_loss_la_ += torch.ones(len_loss)*val.squeeze()
                                         man_opt_loss_re_ += torch.ones(len_loss)*val.squeeze()
                                     b_ad += b
-                                P1 =torch.eye(dim, dtype=torch.float64)
+                                P1 = torch.eye(dim, dtype=gtype)
                                 P1[:supp, :supp] = P
                                 c_losses_man_opt_la.append(man_opt_loss_la_)
                                 c_losses_man_opt_re.append(man_opt_loss_re_)
@@ -157,18 +156,18 @@ def plot_loss_ratio(etas, names, noisy_data=False):
                             ind_b = '0'
                             for b in BlockSizes:
                                 if b > 1 and b <= 4:
-                                    man_opt_gs_loss_la = data[j]['loss']['gt']['Man_Opt_GS'][ind_b]['la']
+                                    man_opt_gs_loss_la = data[j]['loss']['Man_Opt_GS'][ind_b]['la']
                                     man_opt_gs_loss_la = man_opt_gs_loss_la[:min(len_loss + 1, len(man_opt_gs_loss_la))]
                                     man_opt_gs_loss_la += [man_opt_gs_loss_la[-1]] * (max(0, len_loss - len(man_opt_gs_loss_la)))
-                                    man_opt_gs_loss_la[0] = data[j]['loss']['gt']['Grid_search'][ind_b]
+                                    man_opt_gs_loss_la[0] = data[j]['loss']['Grid_search'][ind_b]
 
-                                    man_opt_gs_loss_re = data[j]['loss']['gt']['Man_Opt_GS'][ind_b]['re']
+                                    man_opt_gs_loss_re = data[j]['loss']['Man_Opt_GS'][ind_b]['rgd']
                                     man_opt_gs_loss_re = man_opt_gs_loss_re[:min(len_loss + 1, len(man_opt_gs_loss_re))]
                                     man_opt_gs_loss_re += [man_opt_gs_loss_re[-1]] * (max(0, len_loss - len(man_opt_gs_loss_re)))
-                                    man_opt_gs_loss_re[0] = data[j]['loss']['gt']['Grid_search'][ind_b]
+                                    man_opt_gs_loss_re[0] = data[j]['loss']['Grid_search'][ind_b]
 
-                                    man_opt_gs_loss_la_ += torch.as_tensor(man_opt_gs_loss_la, dtype=torch.float64)
-                                    man_opt_gs_loss_re_ += torch.as_tensor(man_opt_gs_loss_re, dtype=torch.float64)
+                                    man_opt_gs_loss_la_ += torch.as_tensor(man_opt_gs_loss_la, dtype=gtype)
+                                    man_opt_gs_loss_re_ += torch.as_tensor(man_opt_gs_loss_re, dtype=gtype)
                                     ind_b = int(ind_b)+1
                                     ind_b = str(ind_b)
                                 else:
@@ -189,15 +188,15 @@ def plot_loss_ratio(etas, names, noisy_data=False):
                     if h_size == 1 / 2:
                         c_losses_man_opt_la = torch.stack(c_losses_man_opt_la, dim=0)
                         c_losses_man_opt_re = torch.stack(c_losses_man_opt_re, dim=0)
-                        c_losses_man_opt_la = (c_losses_man_opt_la - torch.as_tensor(losses_mo, dtype=torch.float64).unsqueeze(dim=1))
-                        c_losses_man_opt_re = (c_losses_man_opt_re - torch.as_tensor(losses_mo, dtype=torch.float64).unsqueeze(dim=1))
+                        c_losses_man_opt_la = (c_losses_man_opt_la - torch.as_tensor(losses_mo, dtype=gtype).unsqueeze(dim=1))
+                        c_losses_man_opt_re = (c_losses_man_opt_re - torch.as_tensor(losses_mo, dtype=gtype).unsqueeze(dim=1))
                         c_loss_median_man_opt[0, :] = c_losses_man_opt_la.mean(dim=0)
                         c_loss_median_man_opt[1, :] = c_losses_man_opt_re.mean(dim=0)
 
                     c_losses_man_opt_gs_la = torch.stack(c_losses_man_opt_gs_la, dim=0)
                     c_losses_man_opt_gs_re = torch.stack(c_losses_man_opt_gs_re, dim=0)
-                    c_losses_man_opt_gs_la = (c_losses_man_opt_gs_la - torch.as_tensor(losses, dtype=torch.float64).unsqueeze(dim=1))
-                    c_losses_man_opt_gs_re = (c_losses_man_opt_gs_re - torch.as_tensor(losses, dtype=torch.float64).unsqueeze(dim=1))
+                    c_losses_man_opt_gs_la = (c_losses_man_opt_gs_la - torch.as_tensor(losses, dtype=gtype).unsqueeze(dim=1))
+                    c_losses_man_opt_gs_re = (c_losses_man_opt_gs_re - torch.as_tensor(losses, dtype=gtype).unsqueeze(dim=1))
 
                     c_loss_median_man_opt_gs[0, :] = torch.mean(c_losses_man_opt_gs_la, 0)
                     c_loss_median_man_opt_gs[1, :] = torch.mean(c_losses_man_opt_gs_re, 0)
@@ -218,10 +217,11 @@ def plot_loss_ratio(etas, names, noisy_data=False):
             if ind_clamp == len(etas) - 1:
                 axs[1, 0].plot(x_tikz, c_loss_median_man_opt_gs[0, :].cpu(), linestyle='dashed', color=re_colors[h_ind], label='$h_{La} = %.3f$' % h)
                 axs[0, 0].plot(x_tikz, c_loss_median_man_opt_gs[1, :].cpu(), color=re_colors[h_ind], label='$h_{Rgd} = %.3f$' % h)
-                print(man_opt_gs_clamp[h_size]['gt']['re'].cpu()/len(list(data.keys())))
-            axs[0, 1].plot(np.array(etas), man_opt_gs_clamp[h_size]['gt']['re'].cpu() / len(list(data.keys())),
+                print(man_opt_gs_clamp[h_size]['rgd'].cpu()/len(list(data.keys())))
+            axs[0, 1].plot(np.array(etas), man_opt_gs_clamp[h_size]['rgd'].cpu() / len(list(data.keys())),
                            color=re_colors[h_ind], label='$h_{Rgd} = %.3f$' % h)
-            axs[1, 1].plot(np.array(etas), man_opt_gs_clamp[h_size]['gt']['la'].cpu() / len(list(data.keys())), linestyle='dashed', color=re_colors[h_ind], label='$h_{La} = %.3f$'%h)
+            axs[1, 1].plot(np.array(etas), man_opt_gs_clamp[h_size]['la'].cpu() / len(list(data.keys())), linestyle='dashed',
+                           color=re_colors[h_ind], label='$h_{La} = %.3f$' % h)
 
             axs[0, 0].grid(color='k', linestyle='--', linewidth=0.5)
             axs[0, 1].grid(color='k', linestyle='--', linewidth=0.5)

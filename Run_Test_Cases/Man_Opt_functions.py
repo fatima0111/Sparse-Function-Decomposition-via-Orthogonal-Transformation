@@ -19,7 +19,6 @@ from Libs.sbd_noise_robust import get_U
 from Utils.Evaluation_utils import NumpyEncoder
 
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--output_folder', default='/work/ba/output',
@@ -48,13 +47,8 @@ if __name__ == '__main__':
     h_size = args.h_size
     # $ conda activate /work/ba/anova
     start_N_run = args.start_N_run
-    N_run = args.N_run  # 100
-    NN_train = args.NN_train
+    N_run = args.N_run
     N_epochs = args.N_epochs
-    root = '/store/steinitz/datastore/fatimaba/Github/trafo_nova/Anova_AE'#os.getcwd()
-    root_NN = root + '/Output_NN/'
-    root_files = root + '/Output_files'
-    existing_model = True
     run_man_opt = args.run_man_opt
     in_dir = dirname(dirname(abspath(__file__))) + '/Test_Cases_Man_Opt_GS'
     cov = args.cov
@@ -64,8 +58,6 @@ if __name__ == '__main__':
     # os.path.dirname(os.getcwd())+'/Anova_AE/Test_Cases_Man_Opt_GS'
 
     batches = batches_random_functions
-    #N_test_c = 50
-    #dtype = torch.float64
     with open('{}/{}'.format(in_dir, test_cases)) as convert_file:
         data = copy.deepcopy(json.load(convert_file))
         h_ft = torch.zeros((50, 2))
@@ -82,9 +74,8 @@ if __name__ == '__main__':
 
             x_test = data[j]['x_test'] = torch.as_tensor(data[j]['x_test'], dtype=gdtype)
             target_test = compute_function(x_test, ground_truth=ground_truth)
-            eps1 = 3 if (NN_train or cov is not None) else 3
-            eps2 = 2 if (NN_train or cov is not None) else 3
-            y_test = compute_function(x_test, ground_truth)
+            eps1 = 3 if cov is not None else 3
+            eps2 = 2 if cov is not None else 3
             gradF_orig = compute_gradient_orig_2d(x_test, ground_truth)
             gradient = gradF_orig
             hessianF_orig = compute_hessian_orig_2d(x_test.clone(), ground_truth)
@@ -102,7 +93,6 @@ if __name__ == '__main__':
                 hessianF_orig += hessian_noise
 
             hessian_ = torch.matmul(torch.matmul(u1.T.to(device), hessianF_orig), u1.to(device))
-
             hessian = hessian_
             vec_hessian = hessian_.flatten(start_dim=1).T
             u2, d2, v2 = torch.svd(vec_hessian)
@@ -118,29 +108,22 @@ if __name__ == '__main__':
             P, BlockSizes = get_U(hessian_rank.to(gdtype), epsilon1=1e-5, epsilon2=1e-5)
             data[j]['SBD_GT'] = BlockSizes
             data[j]['P'] = P
-            print('BlockSizes alg: {} BlockSizes gt: {} '.format(BlockSizes,
-                                                                 data[j]['groundtruth']['Blocs']))
+            print('BlockSizes alg: {} BlockSizes gt: {} '.format(
+                BlockSizes, data[j]['groundtruth']['blocs']))
             hessian_blocks = P @ hessian @ P.T
             hessian_rank_blocks = P @ hessian_rank @ P.T
-            #print(hessian_rank_blocks.dtype, hessian_rank_blocks.abs().mean(dim=0))
             b_ad = 0
             b_ad_inner = 0
             for b in BlockSizes:
                 if b > 1 and b <= 5:
-                    #data[j]['M']['Man_Opt_RI'][b_ad_inner] = {}
                     data[j]['U']['Man_Opt_RI'][b_ad_inner] = {}
                     data[j]['loss']['Man_Opt_RI'][b_ad_inner] = {}
-                    data[j]['time']['Man_Opt_RI'][b_ad_inner] = {}
 
-                    #data[j]['M']['Man_Opt_GS'][b_ad_inner] = {}
                     data[j]['U']['Man_Opt_GS'][b_ad_inner] = {}
                     data[j]['loss']['Man_Opt_GS'][b_ad_inner] = {}
-                    data[j]['time']['Man_Opt_GS'][b_ad_inner] = {}
 
-                    data[j]['M']['Grid_search'][b_ad_inner] = {}
-                    data[j]['R']['Grid_search'][b_ad_inner] = {}
+                    data[j]['U']['Grid_search'][b_ad_inner] = {}
                     data[j]['loss']['Grid_search'][b_ad_inner] = {}
-                    #data[j]['time']['Grid_search'][b_ad_inner] = {}
                     hessian_rank_b = hessian_rank_blocks[:, b_ad:b_ad + b, b_ad:b_ad + b]
                     hessian_b = hessian_blocks[:, b_ad:b_ad + b, b_ad:b_ad + b]
                     batch_h = batches[b][h_size]
@@ -151,33 +134,15 @@ if __name__ == '__main__':
                             opt_method=opt_method, learning_rate=learning_rate)
                         Bs_man_opt, losses_man_opt, times_man_opt = result_man_opt
 
-                        #data[j]['M']['Man_Opt_RI'][b_ad_inner]['la'] = (
-                        #        Bs_man_opt[0] @ hessian_b @ Bs_man_opt[0].T).abs().mean(dim=0)
-                        #data[j]['M']['Man_Opt_RI'][b_ad_inner]['rgd'] = (
-                        #        Bs_man_opt[1] @ hessian_b @ Bs_man_opt[1].T).abs().mean(dim=0)
-
                         data[j]['U']['Man_Opt_RI'][b_ad_inner]['la'] = Bs_man_opt[0]
                         data[j]['U']['Man_Opt_RI'][b_ad_inner]['rgd'] = Bs_man_opt[1]
 
                         data[j]['loss']['Man_Opt_RI'][b_ad_inner]['la'] = losses_man_opt[0]
                         data[j]['loss']['Man_Opt_RI'][b_ad_inner]['rgd'] = losses_man_opt[1]
 
-                        #data[j]['time']['Man_Opt_RI'][b_ad_inner]['la'] = times_man_opt[0]
-                        #data[j]['time']['Man_Opt_RI'][b_ad_inner]['rgd'] = times_man_opt[1]
-
                     result_man_opt_gs, result_grid_search = run_Man_Opt(hessian_rank_b, optimizer_method=Method.Manifold_Opt_GS,
                         h=h_size, batch_h=batch_h, N_epochs=N_epochs, opt_method=opt_method, learning_rate=learning_rate)
                     Bs_man_opt_gs, losses_man_opt_gs, times_man_opt_gs = result_man_opt_gs
-
-                    #data[j]['M']['Grid_search'][b_ad_inner] = (
-                    #        result_grid_search[0] @ hessian_b @ result_grid_search[0].T).abs().mean(
-                    #    dim=0)
-                    #data[j]['M']['Man_Opt_GS'][b_ad_inner]['la'] = (
-                    #            Bs_man_opt_gs[0] @ hessian_b @ Bs_man_opt_gs[0].T).abs().mean(
-                    #    dim=0)
-                    #data[j]['M']['Man_Opt_GS'][b_ad_inner]['rgd'] = (
-                    #            Bs_man_opt_gs[1] @ hessian_b @ Bs_man_opt_gs[1].T).abs().mean(
-                    #    dim=0)
 
                     data[j]['U']['Grid_search'][b_ad_inner] = result_grid_search[0]
                     data[j]['U']['Man_Opt_GS'][b_ad_inner]['la'] = Bs_man_opt_gs[0]
@@ -186,7 +151,6 @@ if __name__ == '__main__':
                     data[j]['loss']['Grid_search'][b_ad_inner] = result_grid_search[1]
                     data[j]['loss']['Man_Opt_GS'][b_ad_inner]['la'] = losses_man_opt_gs[0]
                     data[j]['loss']['Man_Opt_GS'][b_ad_inner]['rgd'] = losses_man_opt_gs[1]
-
 
                     b_ad_inner += 1
                 b_ad += b
