@@ -8,8 +8,16 @@ import numpy as np
 from Utils.Function_utils import compute_function
 from Utils.Evaluation_utils import get_total_Rot, Init_Method, NumpyEncoder
 from Utils.Function_utils import compute_hessian_autograd, compute_gradient_autograd
-
-
+from os.path import dirname, abspath
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+if torch.cuda.is_available():
+    torch.set_default_tensor_type('torch.cuda.DoubleTensor')
+    device = torch.device('cuda')
+    gdtype = torch.float64
+else:
+    device = torch.device('cpu')
+    gdtype = torch.float64
 def findsubsets(d, n):
     '''
     :param d:
@@ -172,25 +180,26 @@ def get_vanishing_indices(ground_truth, grad, hess, U, max_inter=None, clamp=1e-
 
 
 if __name__ == '__main__':
-    output_folder = '/homes/numerik/fatimaba/store/Github/trafo_nova/Anova_AE/Output_files'
+    in_dir = dirname(dirname(abspath(__file__))) + '/Output/Output_algorithms/ANOVA_sparse_functions'
+    #out_dir = dirname(dirname(abspath(__file__))) + '/homes/numerik/fatimaba/store/Github/trafo_nova/Anova_AE/Output_files'
     covs = [None, 0.5]
     init_method = Init_Method.GS
-    h_sizes = [1]
+    h_sizes = [1.0]
     for h_size in h_sizes:
         print("\n .................................h_size: ", h_size)
         for cov in covs:
             suff_ = '_cov_{}'.format(cov) if cov is not None else ''
             if init_method == Init_Method.GS:
-                name = '{}/Test_anova{}_h_size_{}.json'.format(output_folder, suff_, h_size)
+                name = '{}/Test_ANOVA{}_h_size_{}.json'.format(in_dir, suff_, h_size)
             else:
-                name = '{}/Test_anova{}_mo.json'.format(output_folder, suff_)
+                name = '{}/Test_ANOVA{}_MO_RI.json'.format(in_dir, suff_)
             with open(name) as convert_file:
                 datas = copy.deepcopy(json.load(convert_file))
                 for j in datas.keys():
                     ground_truth = datas[str(j)]['groundtruth']
                     #d = ground_truth['d']
                     U_la, U_rgd = get_total_Rot(datas, str(j), init_method=init_method)
-                    hessian_supp = torch.as_tensor(datas['0']['svd_basis'])
+                    hessian_supp = torch.as_tensor(datas['0']['hessian_basis'])
                     supp = hessian_supp.shape[1]
                     N = hessian_supp.shape[0]
                     x_test = torch.as_tensor(datas[str(j)]['x_test'])
@@ -202,10 +211,10 @@ if __name__ == '__main__':
                     #print(results_)
                     suff_ = '_cov_{}'.format(cov) if cov is not None else ''
                     if init_method == Init_Method.GS:
-                        with open('{}/ANOVA_deriv{}_h_size_{}_{}.json'.format(output_folder, suff_, h_size, j),
+                        with open('{}/ANOVA_deriv{}_h_size_{}_{}.json'.format(in_dir, suff_, h_size, j),
                                   'w') as convert_file:
                             json.dump(results_, convert_file, cls=NumpyEncoder)
                     else:
-                        with open('{}/ANOVA_deriv{}_mo_{}.json'.format(output_folder, suff_, j), 'w') as convert_file:
+                        with open('{}/ANOVA_deriv{}_MO_RI_{}.json'.format(in_dir, suff_, j), 'w') as convert_file:
                             json.dump(results_, convert_file, cls=NumpyEncoder)
 

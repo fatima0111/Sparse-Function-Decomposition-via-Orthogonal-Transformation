@@ -7,7 +7,7 @@ import argparse
 import copy
 from os.path import dirname, abspath
 import torch
-
+import json
 
 from Utils.Evaluation_utils import NumpyEncoder
 if torch.cuda.is_available():
@@ -19,7 +19,7 @@ else:
     gdtype = torch.float64
 
 from Libs.Grid_Search import *
-
+from Utils.Generation_utils import batches_random_matrices
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--output_folder', default=dirname(dirname(abspath(__file__))
@@ -59,31 +59,14 @@ opt_method = args.opt_method
 learning_rate = args.learning_rate
 in_dir_mo = dirname(dirname(abspath(__file__))) + '/Dataset'
 in_dir = args.output_folder + '/Output_algorithms/Random_matrices/Grid_search'
-batches = {
-    2: {1: math.pi,
-        1 / 2: math.pi,
-        1 / 4: math.pi,
-        1 / 8: math.pi,
-        1/10: math.pi},
-    3: {1: math.pi / 2,
-        1 / 2: math.pi / 2,
-        1 / 4: math.pi / 2,
-        1 / 8: math.pi / 2,
-        1/10: math.pi/2},
-    4: {1: math.pi / 2,
-        1 / 2: math.pi / 2,
-        1 / 4: math.pi/2,
-        1 / 8: math.pi/2,
-        1/10: 1.0},
-    5: {1: 2.36}
-}
+batches = batches_random_matrices
 batch_h = batches[d][h_size]
 if run_man_opt:
-    with open('{}/Hessians_dim_{}_N_100.json'.format(in_dir_mo, d)) as convert_file:
+    with open('{}/matrices_dim_{}_M_100.json'.format(in_dir_mo, d)) as convert_file:
         datas = copy.deepcopy(json.load(convert_file))
 else:
     assert (h_size == 1 or h_size == 0.5 or h_size == 0.25 or h_size == 0.125 or h_size == 0.1)
-    fname = '{}/Hessian_GS_{}_h_{}_bh_{:.2f}_dim_{}_gs.json'.format(
+    fname = '{}/matrices_GS_{}_h_{}_bh_{:.2f}_dim_{}_gs.json'.format(
         in_dir, args.suffix_file, h_size, batch_h, d)
     with open(fname) as convert_file:
         datas = copy.deepcopy(json.load(convert_file))
@@ -92,12 +75,10 @@ for j in range(start_N_run, N_run):
     data = datas[j]
     print(data['J'])
     print('\nranK: ', data['rank']['clean'], 'rank_noisy: ', data['rank']['noisy'])
-    data['h_size'] = h_size
-    data['batch_h'] = batch_h
-    hessian_rank = torch.as_tensor(data['svd_basis']['clean'], dtype=gdtype)
-    hessian_rank_noise = torch.as_tensor(data['svd_basis']['noisy'], dtype=gdtype)
-    hessian = torch.as_tensor(data['hessian']['clean'], dtype=gdtype)
-    hessian_noise = torch.as_tensor(data['hessian']['noisy'], dtype=gdtype)
+    matr_rank = torch.as_tensor(data['hessian_basis']['clean'], dtype=gdtype)
+    matr_rank_noise = torch.as_tensor(data['hessian_basis']['noisy'], dtype=gdtype)
+    matr = torch.as_tensor(data['hessian']['clean'], dtype=gdtype)
+    matr_noise = torch.as_tensor(data['hessian']['noisy'], dtype=gdtype)
     R = torch.as_tensor(data['R'], dtype=gdtype)
     key_method = 'Man_Opt_RI' if run_man_opt else 'Man_Opt_GS'
     if run_man_opt:
@@ -128,20 +109,20 @@ for j in range(start_N_run, N_run):
     data['U']['clean'][key_method]['la'] = Us_clean[0]
     data['U']['clean'][key_method]['rgd'] = Us_clean[1]
 
-    data['U']['noise'][key_method]['la'] = Us_noisy[0]
-    data['U']['noise'][key_method]['rgd'] = Us_noisy[1]
+    data['U']['noisy'][key_method]['la'] = Us_noisy[0]
+    data['U']['noisy'][key_method]['rgd'] = Us_noisy[1]
 
     data['loss']['clean'][key_method]['la'] = losses_clean[0]
     data['loss']['clean'][key_method]['rgd'] = losses_clean[1]
 
-    data['loss']['noise'][key_method]['la'] = losses_noisy[0]
-    data['loss']['noise'][key_method]['rgd'] = losses_noisy[1]
+    data['loss']['noisy'][key_method]['la'] = losses_noisy[0]
+    data['loss']['noisy'][key_method]['rgd'] = losses_noisy[1]
 
     if run_man_opt:
-        with open('{}/Out_comp/Compare_Man_opt_grid_search_{}_dim_{}.json'.format(
+        with open('{}/Compare_Man_opt_grid_search_{}_dim_{}.json'.format(
                 args.output_folder, args.suffix_file, d), 'w') as convert_file:
             json.dump(datas, convert_file, cls=NumpyEncoder)
     else:
-        with open('{}/Out_comp/Compare_Man_opt_grid_search_{}_h_{}_bh_{:.2f}_dim_{}.json'.format(
+        with open('{}/Compare_Man_opt_grid_search_{}_h_{}_bh_{:.2f}_dim_{}.json'.format(
                 args.output_folder, args.suffix_file, args.h_size, batch_h, d), 'w') as convert_file:
             json.dump(datas, convert_file, cls=NumpyEncoder)

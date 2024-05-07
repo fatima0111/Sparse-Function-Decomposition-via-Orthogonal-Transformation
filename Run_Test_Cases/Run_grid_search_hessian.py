@@ -7,6 +7,7 @@ import argparse
 import copy
 from os.path import dirname, abspath
 import torch
+import json
 
 
 if torch.cuda.is_available():
@@ -23,8 +24,7 @@ from Utils.Generation_utils import batches_random_matrices
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--output_folder', default='/work/ba/output',
-                    type=str, help='Path of the Output folder')  #
-#'/homes/numerik/fatimaba/store/Github/trafo_nova/Anova_AE'
+                    type=str, help='Path of the Output folder')
 parser.add_argument('--start_N_run', default=0, type=int,
                     help='Number of runs')
 parser.add_argument('--N_run', default=100, type=int,
@@ -42,12 +42,12 @@ h_size = args.h_size
 start_N_run = args.start_N_run
 N_run = args.N_run
 dim = args.dim
-in_dir = dirname(dirname(abspath(__file__)))+'/Test_Cases_Man_Opt_GS'
+in_dir = dirname(dirname(abspath(__file__)))+'/Dataset'
 out_dir = args.output_folder + '/Grid_Search_Output'
 batches = batches_random_matrices
 if h_size in batches[dim].keys():
     batch_h = batches[dim][h_size]
-    filename = '{}/Hessians_dim_{}_N_100.json'.format(in_dir, dim)
+    filename = '{}/matrices_dim_{}_M_100.json'.format(in_dir, dim)
     print('\n {}'.format(filename), h_size)
     with open(filename) as convert_file:
         datas = copy.deepcopy(json.load(convert_file))
@@ -55,13 +55,13 @@ if h_size in batches[dim].keys():
         for j in range(start_N_run, N_run):
             new_datas[str(j)] = datas[str(j)]
         run_grid_search(new_datas, h_size, batch_h)
-        with open('{}/Hessian_GS_{}_h_{}_bh_{:.2f}_dim_{}_gs.json'.format(
+        with open('{}/matrices_GS_{}_h_{}_bh_{:.2f}_dim_{}_gs.json'.format(
                 out_dir, args.suffix_file, args.h_size, batch_h, dim), 'w') as convert_file:
             json.dump(new_datas, convert_file, cls=NumpyEncoder)
 elif h_size == -1:
     for ch_size in batches[dim].keys():
         batch_h = batches[dim][ch_size]
-        filename = '{}/Hessians_dim_{}_N_100.json'.format(in_dir, dim)
+        filename = '{}/matrices_dim_{}_M_100.json'.format(in_dir, dim)
         print('\n {}'.format(filename), ch_size)
         with open(filename) as convert_file:
             datas = copy.deepcopy(json.load(convert_file))
@@ -69,7 +69,7 @@ elif h_size == -1:
             for j in range(start_N_run, N_run):
                 new_datas[str(j)] = datas[str(j)]
             run_grid_search(new_datas, ch_size, batch_h)
-            print(new_datas)
-            with open('{}/Hessian_GS_{}_h_{}_bh_{:.2f}_dim_{}_gs.json'.format(out_dir, args.suffix_file, ch_size,
-                                                                            batch_h, dim), 'w') as convert_file:
+            #print(new_datas)
+            with open('{}/matrices_GS_{}_h_{}_bh_{:.2f}_dim_{}_gs.json'.format(out_dir, args.suffix_file,
+                                                                               ch_size, batch_h, dim), 'w') as convert_file:
                 json.dump(new_datas, convert_file, cls=NumpyEncoder)

@@ -11,7 +11,7 @@ else:
 clamp = 1e-9
 clamp_noise = 1e-4
 clamp_gt = 1e-6
-out_dir = dirname(dirname(abspath(__file__))) + 'Output_algorithms/Random_matrices/Manifold_optimization'
+out_dir = dirname(dirname(abspath(__file__))) + '/Output_algorithms/Random_matrices/Manifold_optimization'
 report_dir = dirname(dirname(abspath(__file__))) + 'Output_evaluations'
 names = {
     '2': ['Compare_Man_opt_grid_search_100_dim_2.json',
@@ -41,7 +41,7 @@ Non_zeros = [[], [], [], []]
 report = {}
 for names_d in names.keys():
     print_string = '\n DIMENSION: {}\n'.format(names_d)
-    for name in names_d:
+    for name in names[names_d]:
         print_string += '\n name: {} \n'.format(name)
         Norm_diff_la = []
         Norm_diff_re = []
@@ -89,12 +89,11 @@ for names_d in names.keys():
         with open('{}/{}'.format(
                 out_dir, name), 'r') as convert_file:
             data = json.load(convert_file)
-            print('\n dim {} name: {} '.format(data[list(data.keys())[0]]['dim'], name))
+            print('\n dim {} name: {} '.format(data[list(data.keys())[0]]['d'], name))
             for j in data.keys():
-                #j=str(j)
-                dim = data[j]['dim']
-                R = torch.as_tensor(data[j]['R']) if 'groundtruth' not in data[j].keys() else torch.as_tensor(data[j]['groundtruth']['v'])
-                H_gt = (R @ torch.as_tensor(data[j]['svd_basis']) @ R.T).abs().mean(dim=0)
+                R = torch.as_tensor(data[j]['R'])
+                #print(data[j]['hessian_basis'])
+                H_gt = (R @ torch.as_tensor(data[j]['hessian_basis']['clean']) @ R.T).abs().mean(dim=0)
                 H_gt[H_gt != torch.clamp(H_gt, clamp_gt)] = 0
                 zero_norm_gt = len(H_gt.nonzero())
                 sparse.append(zero_norm_gt)

@@ -3,29 +3,13 @@ import numpy as np
 import math
 import json
 from enum import Enum
-from Libs.Grid_Search import Method
 
-if torch.cuda.is_available():
-    torch.set_default_tensor_type('torch.cuda.DoubleTensor')
-    #device = torch.device('cuda')
-#else:
-    #device = torch.device('cpu')
-
-batches = {
-    2: {1: math.pi,
-        1 / 2: math.pi,
-        1 / 4: math.pi,
-        1 / 8: math.pi},
-    3: {1: math.pi / 2,
-        1 / 2: math.pi / 2,
-        1 / 4: math.pi / 2,
-        1 / 8: math.pi / 2},
-    4: {1: math.pi / 2,
-        1 / 2: math.pi / 2,
-        1 / 4: math.pi / 2,
-        1 / 8: 1.0}
-}
-
+#if torch.cuda.is_available():
+#    torch.set_default_tensor_type('torch.cuda.DoubleTensor')
+class Method(Enum):
+    Manifold_Opt = 1
+    Grid_Search = 2
+    Manifold_Opt_GS = 3
 class Init_Method(Enum):
     RI = 1
     GS = 2
@@ -51,13 +35,13 @@ def get_total_Rot(data, j, init_method=Init_Method.RI):
     :return:
     '''
     ground_truth = data[j]['groundtruth']
-    ground_truth['v'] = torch.as_tensor(ground_truth['v'])
-    d = data[j]['dim']
-    BlockSizes = data[j]['SBD_GT']
-    supp = int(data[j]['support'])
-    U1 = torch.as_tensor(data[j]['grad_U'])
-    P = torch.eye(d)
-    P[:supp, :supp] = torch.as_tensor(data[j]['P'])
+    #ground_truth['J'] = ground_truth['J']
+    d = ground_truth['d']
+    BlockSizes = data[j]['blocs_alg']
+    supp = int(data[j]['rank_grad'])
+    U1 = torch.as_tensor(data[j]['U_svd'])
+    U_block = torch.eye(d)
+    U_block[:supp, :supp] = torch.as_tensor(data[j]['U_bloc'])
     U_La_ = torch.eye(d)
     U_Rgd_ = torch.eye(d)
     b_ad = 0
@@ -66,17 +50,17 @@ def get_total_Rot(data, j, init_method=Init_Method.RI):
         if b > 1 and b <= 5:
             b_ad_inner_ = str(b_ad_inner)
             if init_method == Init_Method.RI:
-                U_La_[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(data[j]['R']['clean']['Man_Opt_RI'][b_ad_inner_]['la'])
+                U_La_[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(data[j]['U']['Man_Opt_RI'][b_ad_inner_]['la'])
 
-                U_Rgd_[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(data[j]['R']['clean']['Man_Opt_RI'][b_ad_inner_]['rgd'])
+                U_Rgd_[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(data[j]['U']['Man_Opt_RI'][b_ad_inner_]['rgd'])
             else:
                 U_La_[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(
-                    data[j]['R']['clean']['Man_Opt_GS'][b_ad_inner_]['la'])
+                    data[j]['U']['Man_Opt_GS'][b_ad_inner_]['la'])
                 U_Rgd_[b_ad:b_ad + b, b_ad:b_ad + b] = torch.as_tensor(
-                    data[j]['R']['clean']['Man_Opt_GS'][b_ad_inner_]['rgd'])
+                    data[j]['U']['Man_Opt_GS'][b_ad_inner_]['rgd'])
             b_ad_inner += 1
         b_ad += b
-    return U_La_ @ P @ U1.T, U_Rgd_ @ P @ U1.T
+    return U_La_ @ U_block @ U1.T, U_Rgd_ @ U_block @ U1.T
 
 
 def compute_hessian_rotmatrix(data, method, noisy_data=False, noisy_rot=False,
@@ -91,12 +75,12 @@ def compute_hessian_rotmatrix(data, method, noisy_data=False, noisy_rot=False,
     :return:
     '''
     key_clean_noisy = 'clean' if not noisy_data else 'noisy'
-    key_hessian = 'svd_basis' if basis_hess else 'hessian'
+    key_hessian = 'matr_basis' if basis_hess else 'hessian'
     hessian = torch.as_tensor(data[key_hessian][key_clean_noisy], dtype=torch.float64)
     method_name = 'Man_Opt_RI' if method == Method.Manifold_Opt else 'Man_Opt_GS' if method == Method.Manifold_Opt_GS else 'Grid_search'
     clean_noisy_key = 'noisy' if noisy_rot else 'clean'
-    U_rgd = torch.as_tensor(data['R'][clean_noisy_key][method_name]['rgd'], dtype=torch.float64)
-    U_la = torch.as_tensor(data['R'][clean_noisy_key][method_name]['la'], dtype=torch.float64)
+    U_rgd = torch.as_tensor(data['U'][clean_noisy_key][method_name]['rgd'], dtype=torch.float64)
+    U_la = torch.as_tensor(data['U'][clean_noisy_key][method_name]['la'], dtype=torch.float64)
     if p == 1:
         matrix_rgd = (U_rgd @ hessian @ U_rgd.T).abs().mean(dim=0)
         matrix_la = (U_la @ hessian @ U_la.T).abs().mean(dim=0)

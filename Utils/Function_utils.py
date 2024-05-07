@@ -39,7 +39,7 @@ def compute_function(X, ground_truth):
         X = X.unsqueeze(dim=0)
     num_sub_functions = ground_truth['K']
     R = ground_truth['R']
-    entry_indices = ground_truth['U']
+    entry_indices = ground_truth['J']
     parameters = ground_truth['parameters']
     num_sub_function_entries = ground_truth['t_num_sub_function_entries']
     sub_function_indices = ground_truth['t_sub_function_indices']
@@ -118,6 +118,7 @@ def compute_gradient_orig_2d(X, ground_truth):
     R = ground_truth['R']
     y = torch.matmul(R, X.T).T
     gradient_f = torch.zeros([X.shape[1], X.shape[0]])
+    print("\n Init: ", gradient_f.dtype)
     t_sub_function_indices = ground_truth['t_sub_function_indices']
     parameters = ground_truth['parameters']
     active_variables = list(itertools.chain(*R))
@@ -143,6 +144,7 @@ def compute_gradient_orig_2d(X, ground_truth):
                             y[:, J[k][(ind_i+1) % 2]], p_k[(ind_i+1) % 2]
                         )
             gradient_f[i, :] = gradient_i
+    print(R.dtype, gradient_f.dtype)
     gradient = torch.matmul(R.T, gradient_f)
     return gradient
 
