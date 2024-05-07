@@ -1,7 +1,7 @@
 # SFD: Sparse-Function-Decomposition-via-Orthogonal-Transformation
 
 Decomposition of any higher dimensional smooth function into a sum of lower dimensional function, i.e.  
-f(x) = sum.....
+$$f(x) = \sum_{u \in S} f_u(x_u), \qquad x_u := (x_i)_{i \in u}$$
 Two tipical examples are given by the Anchored and the Anova decomposition. The input space of the underlying target function can be rotated such the resulting function 
 has a sparse decomposition, i.e. most of the summands in .. vanish. In  our work we relate each term f_u to the partial derivative of the function. Later we formule some optimization problems on the partial derivatives in order to get the orthogonal matrix such that the new function has a sparse decomposition. 
 Numerical examples on random sampled matrices and later on functions shows the reliability of the algorithm.
@@ -38,17 +38,14 @@ This paper also explains the algorithms in more detail.
 
 ## Directory structure
 
-| File/Folder      | Purpose                                                                                   |
-| -------------    |-------------------------------------------------------------------------------------------|   
-| Dataset          | Sinkhorn Algorithm from Section 4., and NFFT-Sinkhorn algorithm from Section 5. of [[1]](#1) |
-| Evaluate_results | Marginal images for Wasserstein barycenters with general tree                                 |
-| Generate_Dataset | Output of the numerical examples for MOT problem with tree-structured cost function       |
-| Generate_Plots   | Output of the numerical examples for MOT problem with tree-structured cost function       |
-| Libs             | Implementation of numerical examples from Section 6. of [[1]](#1)                           |
-| Out_Dataset      | Implementation of numerical examples from Section 6. of [[1]](#1)                           |
-| Plots            | Implementation of numerical examples from Section 6. of [[1]](#1)                           |
-| Run_Test_Cases   | Auxiliary methods for the Sinkhorn algorithm and the numerical examples                 | 
-| Utils            | Auxiliary methods for the Sinkhorn algorithm and the numerical examples                 | 
+| File/Folder      | Purpose                                                                                             |
+| -------------    |-----------------------------------------------------------------------------------------------------|   
+| Dataset          | Json-files containing Dataset used in the numerical examples (section 5 and appendix D)             |
+| Generation       | Scripts to generate generate dataset (random matrices and functions) and plots of the paper         |
+| Libs             | Implementation of the gid-search method and the simultaneously block-diagonalisation of the hessians|
+| Plots            | contains the generated plots                                                                        |
+| Run_Test_Cases   | Testscripts for run example from section 5 and appendix D                                           |  
+| Utils            | Implementation of numerical examples from Section 6. of [[1]](#1)                                   |
 
 
 ## Legal Information & Credits
