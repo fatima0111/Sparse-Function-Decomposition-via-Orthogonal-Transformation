@@ -1,16 +1,8 @@
 # SFD: Sparse-Function-Decomposition-via-Orthogonal-Transformation
 
- Let $[d]:=\{1, \ldots, d\},$ $\mathbb B_r:= \{x \in \mathbb R^d: \|x\| \le r\},$ and $D:=\otimes_{i \in [d]} [a_i, b_i],$ such that $a_i < b_i \in \mathbb R$ for all $i \in [d]$. For a function $f \in C^2(\mathbb B_r), f: \mathbb B_r \rightarrow \mathbb R,$ find $U \in O(d)$ such that $f_U:= f(U\cdot)$ has a sparse additive structure, i.e.
-
+ Let $[d]:=\{1, \ldots, d\},$ $\mathbb B_r:= \{x \in \mathbb R^d: \|x\| \le r\},$ and $D:=\otimes_{i \in [d]} [a_i, b_i],$ such that $a_i < b_i \in \mathbb R$ for all $i \in [d]$. For a twice continuously differentiable function $f$, i.e. $f \in C^2(\mathbb B_r), f: \mathbb B_r \rightarrow \mathbb R,$ we aim to find an orthogonal matrix $U \in O(d)$ such that $f_U:= f(U\cdot)$ has a sparse additive structure, i.e.
     $$f_U(x) = \sum_{u \in S} \tilde f_u(x_u) , \quad x_u := (x_i)_{i \in u},$$
-with $\mathcal{S} \subset P\left(\{1, \cdots, d\}\right), |\mathcal{S}|\ll 2^d$.
-
-Decomposition of any higher dimensional smooth function into a sum of lower dimensional function, i.e.  
-$$f(x) = \sum_{u \in S} f_u(x_u), \qquad x_u := (x_i)_{i \in u}$$
-such that $S \ll P({1, ...,d}).$
-Two tipical examples are given by the anchored and the Anova decomposition. The input space of the underlying target function can be rotated such the resulting function 
-has a sparse decomposition, i.e. most of the summands in .. vanish. If the underlying function $f \in C^d(\mathbb B(r))$ it can be shown that $f_u$ to the partial derivative $\partial_u f=0$ of the function. Later we formule some optimization problems on the partial derivatives in order to get the orthogonal matrix $U \in O(d),$ such that the new resulting function $f_U:=f(U\cdot)$ has a sparse decomposition. 
-Numerical examples on random sampled matrices and later on functions shows the reliability of our method.
+with $\mathcal{S} \subset P\left(\{1, \cdots, d\}\right), |\mathcal{S}|\ll 2^d$. The graph below below shows a bivariate function that can be decomposed as a sum of two univariate functions after a rotation of angle $\pi/4$ of the input space.
 
 <p align="center">
 <img src="https://github.com/fatima0111/Sparse-Function-Decomposition-via-Orthogonal-Transformation/blob/main/Plots/Bivariate_functions/all_f2.png" width="500" height="500">
@@ -18,7 +10,9 @@ Numerical examples on random sampled matrices and later on functions shows the r
 <p align="center"> 
     <em>Top-left: $f(x)= \sin(5 u_1^{\tT}x) + \sin(5 u_2^{\tT}x)$ where $U=(u_1, u_2) \in SO(2)$  with rotation angle $\pi/4.$ Top-right: $\partial_{x_1}f(x).$ Bottom-left: $f_U(x):=f(Ux).$ Bottom-right: $\partial_{x_1}f_U(x)$ </em>
 </p>
-
+Two tipical techniques to find sparse additive decompositions of functions are given by the anchored and the Anova decomposition. The sparsity of those functions decompositions is equivalent to the fact that most of term of the mixed partial derivative of the target function are vanishing. of The input space of the underlying target function can be rotated such the resulting function 
+has a sparse decomposition, i.e. most of the summands in .. vanish. If the underlying function $f \in C^d(\mathbb B(r))$ it can be shown that $f_u$ to the partial derivative $\partial_u f=0$ of the function. Later we formule some optimization problems on the partial derivatives in order to get the orthogonal matrix $U \in O(d),$ such that the new resulting function $f_U:=f(U\cdot)$ has a sparse decomposition. 
+Numerical examples on random sampled matrices and later on functions shows the reliability of our method.
 ## Prerequisites
 To run the code, the following packages have to be installed
 
