@@ -69,6 +69,8 @@ This paper also explains the algorithms in more detail.
 | `Run_Test_Cases`    | Test scripts for reproducing the examples from Section 5 and Appendix D.                                                       |
 | `Utils`             | Helper functions for generating synthetic test data and supporting the main experiments.                                       |
 
+**Note:** `To save storage space, not all test data are included here. Please feel free to contact the authors directly if you need access to them.`
+
 ## Legal Information & Credits
 
 Copyright (c) 2024 [Fatima Antarou Ba](https://www.tu.berlin/imageanalysis/ueber-uns/team), [Oleh Melnyk](https://olehmelnyk.xyz/), [Christian Wald](https://www.tu.berlin/imageanalysis/ueber-uns/team), [Gabriele Steidl](https://page.math.tu-berlin.de/~steidl/)
