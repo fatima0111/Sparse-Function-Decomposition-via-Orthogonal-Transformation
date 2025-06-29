@@ -1,23 +1,35 @@
 # SFD: Sparse-Function-Decomposition-via-Orthogonal-Transformation
 
- Let $[d]:=\{1, \ldots, d\},$ $\mathbb B_r:= \{x \in \mathbb R^d: \|x\| \le r\},$ and $D:=\otimes_{i \in [d]} [a_i, b_i],$ such that $a_i < b_i \in \mathbb R$ for all $i \in [d]$. For a twice continuously differentiable function $f$, i.e. $f \in C^2(\mathbb B_r), f: \mathbb B_r \rightarrow \mathbb R,$ we aim to find an orthogonal matrix $U \in O(d),$ such that after a basis change the resulting function $f_U:= f(U\cdot)$ has a sparse additive structure, i.e.
-    $$f_U(x) = \sum_{u \in S} \tilde f_u(x_u) , \quad x_u := (x_i)_{i \in u},$$
-with $\mathcal{S} \subset P\left(\{1, \cdots, d\}\right), |\mathcal{S}|\ll 2^d$. The plots below show a bivariate function that can be decomposed as a sum of two univariate functions after a rotation of angle $\pi/4$ of its input space.
+Let $[d]:=\{1, \ldots, d\}$, $\mathbb B_r:=\{x \in \mathbb{R}^d: \|x\|\le r\}$, and $D := \bigotimes_{i \in [d]} [a_i, b_i]$, where $a_i < b_i \in \mathbb{R}$ for all $i \in [d]$. Consider a twice continuously differentiable function $f \in C^2(\mathbb B_r)$, with $f:\mathbb B_r \to \mathbb R$. Our goal is to find an orthogonal matrix $U \in O(d)$ such that, under the change of variables $f_U := f(U \cdot)$, the resulting function admits a sparse additive structure of the form 
+ $$f_U(x) = \sum_{u \in S} \tilde f_u(x_u) , \quad x_u := (x_i)_{i \in u},$$
+where $\mathcal{S} \subset \mathcal{P}(\{1, \ldots, d\})$ and $|\mathcal{S}| \ll 2^d$.
+The plots below illustrate a bivariate function that can be expressed as the sum of two univariate functions after rotating its input domain by an angle of $\pi/4$.
+
 <p align="center">
-<img src="https://github.com/fatima0111/Sparse-Function-Decomposition-via-Orthogonal-Transformation/blob/main/Plots/Bivariate_functions/all_f2.png" width="500" height="500">
+  <img src="https://github.com/fatima0111/Sparse-Function-Decomposition-via-Orthogonal-Transformation/blob/main/Plots/Bivariate_functions/all_f2.png?raw=true" width="500" height="500">
 </p>
-<p align="center"> 
-    <em>Top-left: $f(x)= \sin(5 u_1^{\tT}x) + \sin(5 u_2^{\tT}x)$ where $U=(u_1, u_2) \in SO(2)$  with rotation angle $\pi/4.$ Top-right: $\partial_{x_1}f(x).$ Bottom-left: $f_U(x):=f(Ux).$ Bottom-right: $\partial_{x_1}f_U(x)$ </em>
-</p>
-Two tipical techniques to find sparse additive decompositions of functions are given by the anchored and the Anova decomposition. The sparsity of those functions decompositions is equivalent to the fact that most of its mixed partial derivative vanish. of The input space of the underlying target function can be rotated such the resulting function 
-has a sparse decomposition, i.e. most of the summands in .. vanish. 
 <p align="center">
-<img src="https://github.com/fatima0111/Sparse-Function-Decomposition-via-Orthogonal-Transformation/blob/main/Plots/example_graph.png">
+  <em>
+    <strong>Top-left:</strong> f(x) = sin(5 u₁ᵀx) + sin(5 u₂ᵀx), where U = (u₁, u₂) ∈ SO(2), with rotation angle π/4.  
+    <strong>Top-right:</strong> ∂x₁f(x).  
+    <strong>Bottom-left:</strong> f<sub>U</sub>(x) := f(Ux).  
+    <strong>Bottom-right:</strong> ∂x₁f<sub>U</sub>(x).
+  </em>
 </p>
-<p align="center"> 
-    <em>Example of a Graph $G(f)$ associated to a $12$-dimensional function $f$.</em>
-</p>
-If the underlying function $f \in C^d(\mathbb B(r))$ it can be shown that $f_u$ to the partial derivative $\partial_u f=0$ of the function. Later we formule some optimization problems on the partial derivatives in order to get the orthogonal matrix $U \in O(d),$ such that the new resulting function $f_U:=f(U\cdot)$ has a sparse decomposition. 
+Two common methods for obtaining sparse additive decompositions of multivariate functions are based on the anchored decomposition and the ANOVA decomposition. The sparsity of these decompositions is closely tied to the vanishing of most mixed partial derivatives. In this work, we focus specifically on minimizing first- and second-order interactions that is, the first- and second-order mixed partial derivatives.
+
+To achieve this, we define a graph associated with the target function, where the nodes correspond to nonzero first-order partial derivatives, and the edges represent nonzero second-order mixed partial derivatives.
+
+Finding an orthogonal matrix that minimizes these first- and second-order interactions or equivalently, reduces the number of nodes and edges in the associated graph is accomplished through the following three steps:
+
+   1. Vertex Reduction: Apply singular value decomposition (SVD) to decrease the number of vertices in the function graph.
+
+   2. Block Diagonalization: Perform joint block diagonalization on a family of matrices to reveal underlying structural groupings.
+
+   3. Edge Minimization: Use sparse optimization techniques (based on relaxations of the ℓ₀ “norm”) to reduce the number of edges.
+
+For the final step, we develop and analyze optimization algorithms on the manifold of special orthogonal matrices (i.e., rotations). The figure below summarizes this three-step method.
+ 
 <p align="center">
 <img src="https://github.com/fatima0111/Sparse-Function-Decomposition-via-Orthogonal-Transformation/blob/main/Plots/3_step_optimization.png">
 </p>
