@@ -60,16 +60,14 @@ This paper also explains the algorithms in more detail.
 
 ## Directory structure
 
-| File/Folder      | Purpose                                                                                             |
-| -------------    |-----------------------------------------------------------------------------------------------------|   
-| Dataset          | Json-files containing Dataset used in the numerical examples (section 5 and appendix D)             |
-| Generation       | Scripts to generate generate dataset (random matrices and functions) and plots of the paper         |
-| Libs             | Implementation of the gid-search method and the simultaneously block-diagonalisation of the hessians|
-| Plots            | contains the generated plots                                                                        |
-| Output           | Testscripts for run example from section 5 and appendix D                                           |  
-| Run_Test_Cases   | Testscripts for run example from section 5 and appendix D                                           |  
-| Utils            | Implementation of numerical examples from Section 6. of [[1]](#1)                                   |
-
+| **File/Folder**     | **Purpose**                                                                                                                    |
+|---------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `Dataset`           | JSON files containing the datasets used in the numerical examples (Section 5 and Appendix D).                                  |
+| `Evaluate_results`  | Scripts to evaluate the results of the numerical experiments in Section 5 and Appendix D, and to generate the corresponding plots. |
+| `Libs`              | Implementation of the grid search, simultaneous block diagonalization, and manifold optimization methods described in [1].     |
+| `Plots`             | Contains the generated plots presented in Section 5.                                                                           |
+| `Run_Test_Cases`    | Test scripts for reproducing the examples from Section 5 and Appendix D.                                                       |
+| `Utils`             | Helper functions for generating synthetic test data and supporting the main experiments.                                       |
 
 ## Legal Information & Credits
 
